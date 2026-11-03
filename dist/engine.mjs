@@ -1,13 +1,13 @@
 export const TAU=Math.PI*2;
 export function readMeasurement(body,now=Date.now()){
- if(body?.schemaVersion!==1)throw Error('Schema chưa hỗ trợ');
- const m=body.measurement;if(!m)throw Error('Chưa có measurement');
+ if(body?.schemaVersion!==1)throw Error('Unsupported status schema');
+ const m=body.measurement;if(!m)throw Error('No measurement available');
  const at=Date.parse(m.receivedAt),age=(now-at)/1000;
- if(!Number.isFinite(at)||!Number.isFinite(m.staleAfterSeconds)||m.staleAfterSeconds<=0||age< -30||age>m.staleAfterSeconds||m.freshness!=='online')throw Error('Dữ liệu cũ / chưa online');
- if(m.provenance!=='hardware')throw Error('Nguồn '+m.provenance+' không dùng làm live');
- if(!['ACTIVE','IDLE'].includes(m.coreStatus))throw Error('Thiết bị không sẵn sàng');
- if(!Number.isInteger(m.rpmMilli)||m.rpmMilli<0||!Number.isInteger(m.speedMmPerSecond)||m.speedMmPerSecond<0||typeof m.counterEpoch!=='string'||!/^\d+$/.test(m.cumulativeWorkUnits))throw Error('Measurement không hợp lệ');
- if(body.oracle?.state!=='accepted')throw Error('Oracle chưa accepted');
+ if(!Number.isFinite(at)||!Number.isFinite(m.staleAfterSeconds)||m.staleAfterSeconds<=0||age< -30||age>m.staleAfterSeconds||m.freshness!=='online')throw Error('Stale or offline measurement');
+ if(m.provenance!=='hardware')throw Error('Source '+m.provenance+' cannot be used for live mode');
+ if(!['ACTIVE','IDLE'].includes(m.coreStatus))throw Error('Device is not ready');
+ if(!Number.isInteger(m.rpmMilli)||m.rpmMilli<0||!Number.isInteger(m.speedMmPerSecond)||m.speedMmPerSecond<0||typeof m.counterEpoch!=='string'||!/^\d+$/.test(m.cumulativeWorkUnits))throw Error('Invalid measurement');
+ if(body.oracle?.state!=='accepted')throw Error('Oracle has not accepted the measurement');
  return {rpm:m.rpmMilli/1000,speed:m.speedMmPerSecond,active:m.coreStatus==='ACTIVE'&&m.speedMmPerSecond>0,epoch:m.counterEpoch,work:BigInt(m.cumulativeWorkUnits),expiresAt:at+m.staleAfterSeconds*1000,block:body.builder?.status==='available'?body.builder.anchor?.blockHeight:null};
 }
 export function liveSpeed(m){return m.active?Math.max(.55,Math.min(1.4,m.speed/1000)):0}

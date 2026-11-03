@@ -1,0 +1,3 @@
+import http from 'node:http';import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
+const root=path.dirname(fileURLToPath(import.meta.url));
+const server=http.createServer(async(req,res)=>{try{const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname),file=path.resolve(root,'.'+(p==='/'?'/index.html':p));if(!file.startsWith(root+path.sep)){res.writeHead(403).end();return}const data=await fs.readFile(file);res.setHeader('Content-Type',file.endsWith('.css')?'text/css':/\.(js|mjs)$/.test(file)?'text/javascript':file.endsWith('.json')?'application/json':'text/html');res.end(data)}catch{res.writeHead(404).end('Not found')}});server.listen(8787,'127.0.0.1',()=>console.log('Squeek Run: http://127.0.0.1:8787'));

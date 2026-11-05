@@ -12,7 +12,7 @@ export async function refreshProgress(){
     address=progress.address;$('wallet-disconnect').hidden=!address;$('wallet-connect').textContent=address?'Switch wallet':'Connect wallet';
     if(progress.latestAttempt)window.dispatchEvent(new CustomEvent('squeek:verified-run',{detail:progress.latestAttempt}));
     if(address){show(short(address)+' · Sepolia');$('wallet-progress').textContent=progress.entries.length?progress.entries.map(e=>e.runs+' checked run'+(e.runs===1?'':'s')+' · best '+e.best_score+' · challenge '+e.challenge_id.slice(0,8)).join(' / '):'Wallet verified. Play a shared challenge to save your first run.';}
-    else{show('Not connected');$('wallet-progress').textContent='Practice stays local. Signed-in shared runs are saved to your wallet address.';}
+    else{show('');$('wallet-progress').textContent='Practice stays local. Signed-in shared runs are saved to your wallet address.';}
   }catch(e){show(e.message);}
 }
 async function invalidate(){sequence++;address=null;chain=null;show('Wallet changed. Sign in again to save progress.');$('wallet-progress').textContent='Previous saved progress remains associated with its original wallet.';$('wallet-disconnect').hidden=true;try{await request('logout',{});}catch{}}

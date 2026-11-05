@@ -1,70 +1,70 @@
 *{box-sizing:border-box}
+html,body{height:100%}
 html{background:var(--ds-color-ground,#fff);color:var(--ds-color-ink,#000);font-family:ui-monospace,Consolas,monospace}
-body{margin:0}
+body{margin:0;overflow:hidden;overscroll-behavior:none}
 [hidden]{display:none!important}
-main{max-width:1008px;padding:16px 24px 32px;margin:auto}
 :focus-visible{outline:2px solid #000;outline-offset:2px}
 a{color:inherit;overflow-wrap:anywhere}
 code{font-size:inherit}
 strong{font-variant-numeric:tabular-nums}
 
-select,input,button{font:inherit;font-size:14px;min-height:40px;border:1px solid var(--ds-color-line);border-radius:8px;padding:8px 12px;background:var(--ds-color-ground);color:inherit}
+/* the whole page is exactly one screen: header / game (flexible) / strips */
+main{height:100vh;height:100dvh;max-width:1008px;margin:auto;display:flex;flex-direction:column;gap:8px;padding:max(8px,env(safe-area-inset-top)) 12px max(8px,env(safe-area-inset-bottom))}
+main>*{flex:none}
+
+select,input,button{font:inherit;font-size:14px;min-height:36px;border:1px solid var(--ds-color-line);border-radius:8px;padding:6px 12px;background:var(--ds-color-ground);color:inherit}
 button{cursor:pointer;font-weight:600}
 button:hover:not(:disabled){background:#000;color:#fff}
 button:disabled{background:var(--ds-color-line);color:var(--ds-color-grey);cursor:default}
 button.quiet{font-weight:400;color:var(--ds-color-grey)}
-input{width:160px}
+input{width:150px}
 
-/* top bar: brand left, one wallet action right */
-.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-h1{font-size:20px;line-height:28px;margin:0;letter-spacing:-.5px}
-.brand p{margin:0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ds-color-grey)}
-.wallet{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
-#wallet-state{color:var(--ds-color-grey);overflow-wrap:anywhere}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+h1{font-size:18px;line-height:24px;margin:0;letter-spacing:-.5px}
+.wallet{display:flex;align-items:center;gap:8px;font-size:13px;min-width:0}
+#wallet-state{color:var(--ds-color-grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 
-/* the game comes first */
-.arena{position:relative;border:1px solid var(--ds-color-line);background:#fff}
-canvas{width:100%;display:block;image-rendering:pixelated}
-.hud{position:absolute;pointer-events:none;top:16px;left:24px;right:24px;display:flex;justify-content:space-between;font-size:14px;letter-spacing:1px}
-#score{font-size:20px;font-weight:bold;font-variant-numeric:tabular-nums}
+/* the stage takes the leftover height; the arena is the central 560x440 of the canvas, scaled to fit */
+.stage{flex:1 1 auto;min-height:0;container-type:size;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.arena{position:relative;width:min(100cqw,100cqh*560/440);height:min(100cqh,100cqw*440/560);border:1px solid var(--ds-color-line);background:#fff}
+canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;image-rendering:pixelated;outline:none}
+.hud{position:absolute;pointer-events:none;top:10px;left:16px;right:16px;display:flex;justify-content:space-between;font-size:13px;letter-spacing:1px}
+#score{font-size:18px;font-weight:bold;font-variant-numeric:tabular-nums}
 
-.bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 4px;font-size:14px}
-.mode{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.mode #duration,.meta{color:var(--ds-color-grey)}
-.meta{display:flex;gap:16px;align-items:baseline}
-.meta strong{display:inline;font-size:inherit;color:var(--ds-color-ink)}
-.keys{font-size:13px;line-height:20px;color:var(--ds-color-grey);margin:4px 0 16px}
-kbd{border:1px solid #000;border-bottom-width:3px;padding:1px 6px;font:inherit;font-weight:bold;color:var(--ds-color-ink)}
-
-/* result appears only after a run */
-.result{border:1px solid var(--ds-color-line);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:14px;line-height:20px}
-.result p{margin:0 0 8px;overflow-wrap:anywhere}
-.result #onchain-state{margin:8px 0 0;color:var(--ds-color-grey)}
+.result{border:1px solid var(--ds-color-line);border-radius:8px;padding:8px 12px;font-size:13px;line-height:18px}
+.result p{margin:0;overflow-wrap:anywhere}
+.result .row{margin-top:6px}
+.result #onchain-state{margin-top:4px;color:var(--ds-color-grey)}
 .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.row label{color:var(--ds-color-grey)}
 
-.ranking{border-top:1px solid var(--ds-color-line);padding-top:16px;font-size:14px;line-height:20px}
-.ranking-header{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
-h2{font-size:16px;line-height:24px;margin:0}
+.bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;font-size:13px;min-width:0}
+.bar select{min-width:0;max-width:100%}
+.bar .best{margin-left:auto;color:var(--ds-color-grey)}
+.best strong{color:var(--ds-color-ink)}
+.links{display:flex;gap:4px}
+
+/* leaderboard and info live in dialogs so the page never scrolls */
+dialog{width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:1px solid var(--ds-color-ink);border-radius:12px;padding:16px;background:var(--ds-color-ground);color:var(--ds-color-ink);font-size:13px;line-height:20px}
+dialog::backdrop{background:#0008}
+dialog p{margin:8px 0;overflow-wrap:anywhere}
+.dlg-head{display:flex;align-items:baseline;gap:12px}
+.dlg-head h2{margin:0;font-size:16px;line-height:24px;flex:1}
 #challenge-state{color:var(--ds-color-grey)}
+.close{min-height:32px;padding:2px 10px}
 table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;margin-top:8px}
-th,td{padding:8px;text-align:left;border-bottom:1px solid var(--ds-color-line);height:40px}
+th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--ds-color-line);height:36px}
 th{background:var(--ds-color-mist);font-weight:600}
 td:nth-child(n+3),th:nth-child(n+3){text-align:right}
-td:nth-child(2){overflow-wrap:anywhere;max-width:260px}
-.note{color:var(--ds-color-grey);overflow-wrap:anywhere;margin:8px 0 0}
-
-/* technical detail stays out of the way */
-.tech{font-size:13px;line-height:22px;color:var(--ds-color-grey);margin-top:24px;border-top:1px solid var(--ds-color-line);padding-top:12px}
-.tech summary{cursor:pointer;color:var(--ds-color-ink);font-size:14px}
-.tech p{margin:8px 0;overflow-wrap:anywhere}
+td:nth-child(2){overflow-wrap:anywhere;max-width:240px}
+.note{color:var(--ds-color-grey)}
 
 @media(max-width:640px){
-  main{padding:12px 16px 24px}
-  .hud{top:8px;left:8px;right:8px;font-size:11px}
-  #score{font-size:16px}
-  select,input,button{min-height:44px}
-  input{font-size:16px;flex:1 1 140px;width:auto}
-  .row label{flex-basis:100%}
-  .ranking-header{flex-direction:column;gap:4px}
+  main{padding-left:8px;padding-right:8px;gap:6px}
+  .hud{top:6px;left:8px;right:8px;font-size:11px}
+  #score{font-size:15px}
+  select,input,button{min-height:40px}
+  input{font-size:16px;flex:1 1 120px;width:auto}
+  .bar{font-size:12px}
+  #wallet-connect{padding:6px 10px}
 }
+@media(max-height:480px){main{gap:4px}}

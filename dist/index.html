@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="One wheel. One key. Shared skill challenges from recorded Squeekchain hardware."><title>Squeek Run — Inside the Wheel</title><link rel="stylesheet" href="design-tokens.css"><link rel="stylesheet" href="style.css"></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="One wheel. One key. Shared skill challenges from recorded Squeekchain hardware."><title>Squeek Run — Inside the Wheel</title><link rel="stylesheet" href="design-tokens.css"><link rel="stylesheet" href="style.css"></head>
 <body data-ds-profile="compact"><main>
 
 <header class="top">
-  <div class="brand"><h1>SQUEEK RUN</h1><p>Inside the wheel</p></div>
+  <h1>SQUEEK RUN</h1>
   <div class="wallet" aria-label="Wallet">
     <span id="wallet-state" role="status">Not connected</span>
     <select id="wallet-provider" aria-label="Wallet provider" hidden></select>
@@ -12,46 +12,45 @@
   </div>
 </header>
 
-<section class="arena" aria-label="Squeek Run game">
-  <canvas id="game" width="960" height="440" tabindex="0" aria-label="Hamster inside the bottom of a wheel. Press Space to start, jump, double jump and retry."></canvas>
+<div id="stage" class="stage"><section id="arena" class="arena" aria-label="Squeek Run game">
+  <canvas id="game" width="960" height="440" tabindex="0" aria-label="Hamster inside the bottom of a wheel. Press Space or tap to start, jump, double jump and retry."></canvas>
   <div class="hud"><span id="mode">PRACTICE · LOCAL</span><span id="score">0000</span></div>
-</section>
-
-<div class="bar">
-  <div class="mode"><label for="play-mode">Mode</label>
-    <select id="play-mode"><option value="practice">Practice</option><option value="recorded">Shared challenge</option><option value="live">Live hardware</option></select>
-    <span id="duration">No ranking in practice</span>
-  </div>
-  <div class="meta"><span>Best <strong id="best">0000</strong></span><span id="info" role="status" aria-live="polite">Checking hardware…</span></div>
-</div>
-<p class="keys"><kbd>SPACE</kbd> start · jump · double jump · retry. Stay low under floating bars; delay your second jump to clear a tower.</p>
+</section></div>
 
 <section id="result" class="result" aria-label="Your run" hidden>
   <p id="submission" role="status">Finish a shared challenge run to rank it.</p>
   <div id="ranked-actions" class="row">
-    <label for="runner-name">Name</label><input id="runner-name" maxlength="20" value="Runner" autocomplete="off">
+    <input id="runner-name" aria-label="Leaderboard name" maxlength="20" value="Runner" autocomplete="off">
     <button id="submit" disabled>Submit run</button>
-    <button id="replay" class="quiet" disabled>Watch replay</button>
+    <button id="replay" class="quiet" disabled>Replay</button>
     <button id="save-onchain" disabled>Save onchain</button>
   </div>
   <p id="onchain-state" role="status"></p>
   <a id="onchain-tx" target="_blank" rel="noreferrer" hidden>View transaction ↗</a>
 </section>
 
-<section class="ranking" aria-labelledby="ranking-title">
-  <div class="ranking-header"><h2 id="ranking-title">Leaderboard</h2><span id="challenge-state">Loading…</span></div>
+<div class="bar">
+  <select id="play-mode" aria-label="Mode"><option value="practice">Practice</option><option value="recorded">Shared challenge</option><option value="live">Live hardware</option></select>
+  <span class="best">Best <strong id="best">0000</strong></span>
+  <div class="links"><button class="quiet" data-open="board-dialog">Leaderboard</button><button class="quiet" data-open="info-dialog">Info</button></div>
+</div>
+
+<dialog id="board-dialog" aria-labelledby="ranking-title">
+  <div class="dlg-head"><h2 id="ranking-title">Leaderboard</h2><span id="challenge-state">Loading…</span><button class="quiet close" data-close aria-label="Close">✕</button></div>
   <table><thead><tr><th scope="col">#</th><th scope="col">Runner</th><th scope="col">Score</th><th scope="col">Time</th></tr></thead><tbody id="leaderboard"><tr><td colspan="4">Loading leaderboard…</td></tr></tbody></table>
   <p id="challenge-source" class="note">Practice scores stay on this device.</p>
-</section>
+</dialog>
 
-<details class="tech"><summary>Status, onchain &amp; rules</summary>
+<dialog id="info-dialog" aria-labelledby="info-title">
+  <div class="dlg-head"><h2 id="info-title">Status, onchain &amp; rules</h2><button class="quiet close" data-close aria-label="Close">✕</button></div>
+  <p><span id="duration">No ranking in practice</span> · <span id="info" role="status" aria-live="polite">Checking hardware…</span></p>
   <p id="wallet-progress">Practice stays local. Signed-in shared runs are saved to your wallet address.</p>
   <p id="onchain-progress">Onchain results appear here after saving.</p>
   <p><span id="chain-state">Checking Sepolia contracts…</span> <a id="chain-explorer" hidden target="_blank" rel="noreferrer">SqueekCore ↗</a> <a id="score-contract" target="_blank" rel="noreferrer" hidden>Score contract ↗</a></p>
   <p id="chain-detail"></p>
   <p>Shared challenges use an immutable snapshot of recorded hardware passages from the Squeekchain API: everyone gets the same seed, obstacles and speed timeline. Each passage interval maps to <code>1.1 / interval seconds</code> rad/s, clamped to 0.55–1.4 and smoothed at 120 Hz. This is a game rule, not a physical simulation. Live mode freezes on idle, errors, stale data or an epoch change.</p>
-  <p>The server recomputes shared scores from your Space inputs. Replay checking limits score tampering; it does not prevent bots or prove who played. Saving onchain writes a server-attested game score to the Squeek Run score contract on Sepolia (test ETH for gas). It is not SqueekCore-certified physical work. Wallet support: regular EOA wallets only.</p>
+  <p>The server recomputes shared scores from your inputs. Replay checking limits score tampering; it does not prevent bots or prove who played. Saving onchain writes a server-attested game score to the Squeek Run score contract on Sepolia (test ETH for gas). It is not SqueekCore-certified physical work. Wallet support: regular EOA wallets only.</p>
   <p id="telemetry">SQUEEKCHAIN / CHECKING</p><p>RULES wheel-2 · 120 Hz · <a href="https://docs.squeekchain.com/developers/api/" target="_blank" rel="noreferrer">Squeekchain API ↗</a></p>
-</details>
+</dialog>
 
 </main><script type="module" src="game.js"></script></body></html>

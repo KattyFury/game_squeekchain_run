@@ -1,1 +1,23 @@
-{"name":"squeek-run","version":"0.2.0","private":true,"type":"module","engines":{"node":">=24"},"scripts":{"start":"node server.mjs","build":"node scripts/build.mjs","test":"node --test tests/*.test.mjs"},"dependencies":{"viem":"2.57.16"}}
+{
+  "name": "squeek-run",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "contract:compile": "node scripts/compile-contract.mjs"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "5.6.1",
+    "viem": "2.57.16"
+  },
+  "devDependencies": {
+    "ganache": "7.9.2",
+    "solc": "0.8.38"
+  }
+}

@@ -10,6 +10,7 @@ async function request(path,body){const r=await fetch('/api/wallet/'+path,{metho
 export async function refreshProgress(){
   const version=sequence;try{const progress=await request('progress');if(version!==sequence)return;
     address=progress.address;$('wallet-disconnect').hidden=!address;$('wallet-connect').textContent=address?'Verify / switch wallet':'Connect wallet';
+    if(progress.latestAttempt)window.dispatchEvent(new CustomEvent('squeek:verified-run',{detail:progress.latestAttempt}));
     if(address){show(short(address)+' · signed in on Sepolia');$('wallet-progress').textContent=progress.entries.length?progress.entries.map(e=>e.runs+' checked run'+(e.runs===1?'':'s')+' · best '+e.best_score+' · challenge '+e.challenge_id.slice(0,8)).join(' / '):'Wallet verified. Play a shared challenge to save your first run.';}
     else{show('Connect a regular Ethereum wallet · Sepolia');$('wallet-progress').textContent='Practice stays local. Signed-in shared runs are saved to your wallet address.';}
   }catch(e){show(e.message);}
@@ -29,3 +30,5 @@ $('wallet-connect').addEventListener('click',async()=>{
 $('wallet-disconnect').addEventListener('click',async()=>{try{await request('logout',{});sequence++;address=null;provider?.removeListener?.('accountsChanged',invalidate);provider?.removeListener?.('chainChanged',invalidate);await refreshProgress();}catch(e){show(e.message);}});
 export async function loadChain(){try{const r=await fetch('/api/chain',{signal:AbortSignal.timeout(20000)});const body=await r.json();if(!r.ok||!body.verified)throw Error(body.error||'Sepolia verification unavailable');$('chain-state').textContent='Sepolia RPC verified · ETH block '+body.ethereumBlock+' · settled Squeek block '+body.squeekBlock;$('chain-explorer').href=body.explorer;$('chain-explorer').hidden=false;$('chain-detail').textContent='12-block confirmation policy · checked '+body.checkedAt+'. Hardware recording and settled contract state are separate sources.';}catch(e){$('chain-state').textContent='Sepolia RPC unavailable';$('chain-detail').textContent=e.message;}}
 refreshProgress();loadChain();
+
+export async function connectedWallet(){await ensureWalletNetwork();if(!address||!provider)throw Error('Connect and verify your wallet first.');return {provider,address};}

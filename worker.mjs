@@ -1,3 +1,4 @@
+import {onchainConfig,activateContract,attestRun,onchainProgress} from './onchain.mjs';
 import {walletSession,walletNonce,walletVerify,walletLogout} from './wallet-auth.mjs';
 import {readSepoliaSnapshot} from './sepolia.mjs';
 import {challengeFromRuns,digest} from './challenge.mjs';
@@ -33,6 +34,10 @@ export async function refreshChallenge(db){
 }
 export async function api(request,env){
   const url=new URL(request.url),db=env.DB;if(!db)return json({error:'Leaderboard is not configured'},503);
+  if(request.method==='GET'&&url.pathname==='/api/onchain/progress')return json(await onchainProgress(request,env));
+  if(request.method==='GET'&&url.pathname==='/api/onchain/config')return json(await onchainConfig(env));
+  if(request.method==='POST'&&url.pathname==='/api/onchain/activate'){await limit(request,db,'activate',4);return json(await activateContract(request,env,await readBody(request,1024)));}
+  if(request.method==='POST'&&url.pathname==='/api/onchain/attest'){await limit(request,db,'attest',10);return json(await attestRun(request,env,await readBody(request,1024)));}
   if(request.method==='GET'&&url.pathname==='/api/chain'){
     const cache=globalThis.caches?.default,cacheKey=new Request(url.origin+'/api/chain');const hit=cache?await cache.match(cacheKey):null;if(hit)return hit;
     try{const snapshot=await readSepoliaSnapshot(env.SEPOLIA_RPC_URL);const response=Response.json(snapshot,{headers:{'Cache-Control':'public, max-age=45'}});if(cache)await cache.put(cacheKey,response.clone());return response;}catch{return json({verified:false,error:'Sepolia RPC verification unavailable. Hardware gameplay remains separate.'},503);}
@@ -42,7 +47,7 @@ export async function api(request,env){
   if(request.method==='POST'&&url.pathname==='/api/wallet/logout'){return Response.json({signedOut:true},{headers:{'Set-Cookie':await walletLogout(request,db),'Cache-Control':'no-store'}});}
   if(request.method==='GET'&&url.pathname==='/api/wallet/progress'){
     const address=await walletSession(request,db);if(!address)return json({address:null,entries:[]});
-    const {results}=await db.prepare('SELECT challenge_id,MAX(score) AS best_score,COUNT(*) AS runs,MAX(completed) AS completed FROM entries WHERE wallet_address=? AND rules=? GROUP BY challenge_id ORDER BY best_score DESC LIMIT 20').bind(address,RULES).all();return json({address,chainId:11155111,entries:results});
+    const {results}=await db.prepare('SELECT challenge_id,MAX(score) AS best_score,COUNT(*) AS runs,MAX(completed) AS completed FROM entries WHERE wallet_address=? AND rules=? GROUP BY challenge_id ORDER BY best_score DESC LIMIT 20').bind(address,RULES).all();const latest=await db.prepare('SELECT attempt_id FROM entries WHERE wallet_address=? ORDER BY created_at DESC LIMIT 1').bind(address).first();return json({address,chainId:11155111,entries:results,latestAttempt:latest?.attempt_id||null});
   }
   if(request.method==='GET'&&url.pathname==='/api/challenge'){
     const row=await latest(db);if(!row)return json({error:'Hardware challenge is being prepared. Practice remains available.'},503);return json(JSON.parse(row.body));

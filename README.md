@@ -1,30 +1,38 @@
-# Squeek Run — local prototype 0.1
+# Squeek Run 0.2
 
-Run: Node.js 20+ installed, open terminal here and run npm start. Visit http://127.0.0.1:8787. Alternatively double-click start.bat. Space starts, jumps and restarts; holding Space does not auto-repeat.
+A monochrome Canvas skill game: a hamster at the inside bottom of a wheel, hidden upper half, Space-only play, double jump, ground and floating obstacles.
 
-Original monochrome canvas art. Hamster stays inside the bottom of the rotating wheel. Obstacles rotate on the inner rim. Jump uses vertical gravity, fixed 120Hz simulation and polygon-vs-box collision. Practice accelerates from 0.8 to 1.4 rad/s; live maps measured speedMmPerSecond / 1000 into 0.55–1.4 rad/s. This mapping is a game-design choice, not the wheel's real angular speed.
+## Play
 
-## Verification — 2026-11-04 Asia/Saigon
+Public game: https://squeek-run-test.plaidspice8.chatgpt.site/
+Backend: https://squeek-run-api.kattyfury1403.workers.dev
 
-GET https://api.squeekchain.com/v1/status returned HTTP 200 and Access-Control-Allow-Origin: *. Snapshot saved in evidence/status-live.json. Observed schemaVersion 1; measurement provenance hardware, freshness online, coreStatus IDLE, rpmMilli 0. Oracle accepted. Settled block from builder.anchor: 7661. Browser fetch also displayed hardware 0 RPM, block 7661. This verifies the API response/integration, not the physical hamster independently; device signatures and contracts are not independently verified by this prototype.
+Node.js 24+ is required for the local SQLite server. Run `npm start`, then open http://127.0.0.1:8787. Run `npm test` and `npm run build` for verification and static packaging.
 
-Official schema/field semantics: https://docs.squeekchain.com/developers/api/ . receivedAt and staleAfterSeconds enforce freshness. rpmMilli / 1000 = RPM. cumulativeWorkUnits is parsed as BigInt, epoch-scoped; never equated to distance or settled work. Projected builder values are not consumed. The anchor label means API-reported settled frontier, not a direct RPC confirmation by this client.
+- Practice: a device-local best; no server ranking.
+- Shared hardware challenge: a pinned 60-second source window. Everyone uses the same seed, obstacle schedule and speed samples. Finish a run, enter an alias and submit the replay. Watch last run plays back locally.
+- Live: fresh accepted hardware only. Idle, stale, faulty or unavailable data freezes the simulation. A counter epoch change requires a new run. No ranking.
 
-Live only starts from accepted, fresh hardware with ACTIVE status and positive speed. If hamster rests, connection fails, or data expires, live freezes without advancing score. Counter epoch change requires Space to start a new run. Practice is explicitly LOCAL, has a separate local best, and does not silently change into live. Unknown/simulated/stale/faulted data is rejected. Poll every 2.5s, conditional ETag, timeout 8s, Retry-After on 429/503.
+## Hardware evidence and rules
 
-## Scope
+Verified on 2026-11-05 using the official `/v1/status` and `/v1/measurement/runs?limit=100` endpoints. The captured history and admitted challenge are in `evidence/`. Source installation and continuity IDs are kept with the challenge. Recorded hardware is explicitly distinct from current live activity, projections and settled chain results. Device signatures are not independently verified by this game. The history API describes device evidence, not SqueekCore-certified work.
 
-Playable local prototype, not an IMD swarm job or submitted product. No wallet connection, payments, transactions, SQK prizes, historical replay, public leaderboard or claim of Builder eligibility. Next product work: tune art/physics through playtesting, then carry the concrete project into IMD's verified workflow.
+Only hardware, measurement-eligible staging/production segments are considered. Unsupported schemas are rejected. Counter discontinuities, mismatching previous passage timestamps, nonmonotonic timestamps and gaps over three seconds split source windows. A continuous window must have at least 30 seconds; the game uses up to 60 seconds. Timestamp precision is reduced to milliseconds and quantized to 120 Hz for game timing. Each passage interval maps to `clamp(1.1 / intervalSeconds, 0.55, 1.4)` radians/second, then smooths at 2/120 per tick. This is a disclosed game mapping, not wheel geometry or chain certification.
 
-## Tests
+`simulation.mjs` is imported by browser and server. `wheel-2` uses a fixed 120 Hz step, seeded immutable obstacle groups, and recovery space between groups. The upper half is hidden; obstacles never mutate in view. The saved full-route witness finishes the admitted hardware challenge. Tests also search full sequences over several seeds with abrupt speed changes. This sampled coverage does not prove every possible future live speed sequence. New hardware sources must pass a full-route check before admission; the scheduled refresh rejects a different source until it has a matching approved witness.
 
-Run npm test. Tests cover captured real schema, stale/simulated/faulty rejection, deterministic obstacles, speed cap and collision/jump clearance. Browser checked Space start/jump/restart, ground collision, API fetch, mobile and desktop layout. Full live movement could not be observed because the real hamster was idle during verification.
+## Replay and storage
 
-## Hidden upper wheel update
-Only the lower semicircle is visible. Obstacles change height (20–36), width (12–28), and angle (+/-0.3 radians per slot) while hidden above. Three bounded slots guarantee over one second between obstacle centers at maximum game speed. Practice uses a new crypto-generated seed each run; live uses sampled work as the initial seed. No live movement is fabricated.
+The browser records Space press ticks. The server ignores client scores, recreates the admitted challenge and simulates the full replay. It requires a terminal collision or challenge end, ordered bounded input, and plausible elapsed wall time. Requests have streaming payload limits; attempts expire; per-IP rate budgets and atomic one-submission-per-attempt logic limit spam and handle duplicate retries. The D1 leaderboard is scoped by challenge and rule version, and retains replays. Aliases are unauthenticated and are not unique identities. Replay validation is not complete bot prevention or an onchain result.
 
-## Double jump
-Space can be pressed twice per flight. Landing restores both jumps; key repeat is ignored. 40% of generated barriers have two stacked tiers (96–104px), above the ~79px single-jump apex. Delay the second press to gain enough height. Two small marks under the hamster show jumps remaining. Angular jitter reduced to +/-0.2 rad to preserve landing time between barriers.
+Cloudflare Worker `squeek-run-api` and D1 `squeek-run-leaderboard` are separate from the static Sites frontend. `wrangler.jsonc` contains public resource IDs only. `migrations/` owns the schema. Local preview uses its own ignored `.data/local.sqlite`, never production data. Deployment commands read the existing key file via `scripts/cloudflare.mjs`; no credentials are copied into this repository.
 
-## Three-lane obstacle groups
-Six authored patterns mix ground pairs, a narrowed 88px double-jump tower, lane-2 floating bars (70px lift), lane-3 bars (128px lift), and floor-plus-ceiling combinations. Floating bars are solid collision surfaces, not decoration. A thin support line is decorative. Groups reroll only when their full geometry is hidden in the upper semicircle. Ground/air combinations replace independent random placement to avoid full-height walls. Each pattern is searched for a Space-only route using the same 120Hz jump and polygon collision at 0.55, 0.8, 1.1 and 1.4 rad/s. This is sampled-speed per-pattern coverage, not a proof for all changing-speed sequences.
+The interface imports a local snapshot of design-system v3 `web.css` (hash recorded in `design-tokens.css`), uses compact spacing, and preserves the requested monochrome game art.
+
+## Verification and submission limits
+
+24 automated tests cover captured source interpretation, stale/simulated data, jumps/collision, deterministic full replay, entire obstacle sequences, changing speeds, malicious payloads, duplicates, expiration and rate limits. Browser smoke testing is separate from these automated checks.
+
+No wallet, transactions, SQK prizes, IMD job or paid submission has been created. Before the first IMD job, use a regular externally owned wallet verified on the Genesis profile; the first payer determines the project owner. Verify current IMD/Genesis submission requirements immediately before submitting. Direct-domain submissions were reported paused by the owner; this build does not claim that restriction has changed or that it qualifies for a badge.
+
+Official references: https://docs.squeekchain.com/developers/api/ and https://docs.squeekchain.com/developers/build-with-ai/ .

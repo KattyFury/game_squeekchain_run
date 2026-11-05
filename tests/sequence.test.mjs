@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs/promises';import {RULES,validateReplay} from '../simulation.mjs';import {solveRoute} from '../scripts/solve-route.mjs';
+const recorded=JSON.parse(await fs.readFile(new URL('../evidence/challenge.json',import.meta.url),'utf8'));
+test('entire recorded hardware challenge has a reproducible finish route',()=>{const replay=solveRoute(recorded);assert.equal(validateReplay(recorded,replay).completed,true);});
+for(const speed of [550000,800000,1100000,1400000])test('full randomized sequences with abrupt speed transitions: '+speed,()=>{for(const seed of ['1','53','991']){const challenge={...recorded,rules:RULES,seed,speeds:Array.from({length:16},(_,i)=>({tick:i*450,speed:i%2?1950000-speed:speed}))};assert.equal(validateReplay(challenge,solveRoute(challenge)).completed,true);}});

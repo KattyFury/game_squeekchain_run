@@ -1,0 +1,9 @@
+{
+  "name": "squeek-run-api",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-05",
+  "workers_dev": true,
+  "d1_databases": [{"binding":"DB","database_name":"squeek-run-leaderboard","database_id":"f2d2c573-afc8-4a9d-9704-3b40ef823105","migrations_dir":"migrations"}],
+  "triggers": {"crons":["*/30 * * * *"]},
+  "observability": {"enabled":true,"traces":{"enabled":true}}
+}

@@ -1,0 +1,16 @@
+{
+  "verified": true,
+  "chainId": 11155111,
+  "release": "squeeks-sepolia-core3-mining6-001",
+  "core": "0x74665dAecA35A2303e767E76a2FF1FB6F93e119f",
+  "ethereumBlock": "12068095",
+  "ethereumBlockHash": "0x438f1b4fcdf49eeaa3bb5f33650b4288dec56e670df64aa1b2242bf5eea634db",
+  "blockTimestamp": 1793864964,
+  "confirmations": 12,
+  "settledThroughRound": "1973",
+  "squeekBlock": "13095",
+  "cumulativeWork": "148986",
+  "paused": false,
+  "checkedAt": "2026-11-05T07:52:13.759Z",
+  "explorer": "https://eth-sepolia.blockscout.com/address/0x74665dAecA35A2303e767E76a2FF1FB6F93e119f"
+}

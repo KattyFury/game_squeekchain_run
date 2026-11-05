@@ -4,7 +4,8 @@ A monochrome Canvas skill game: a hamster at the inside bottom of a wheel, hidde
 
 ## Play
 
-Public game: https://squeek-run-test.plaidspice8.chatgpt.site/
+Public game (Cloudflare): https://squeek-run-api.kattyfury1403.workers.dev/
+Earlier preview: https://squeek-run-test.plaidspice8.chatgpt.site/
 Backend: https://squeek-run-api.kattyfury1403.workers.dev
 
 Node.js 24+ is required for the local SQLite server. Run `npm start`, then open http://127.0.0.1:8787. Run `npm test` and `npm run build` for verification and static packaging.
@@ -25,14 +26,24 @@ Only hardware, measurement-eligible staging/production segments are considered. 
 
 The browser records Space press ticks. The server ignores client scores, recreates the admitted challenge and simulates the full replay. It requires a terminal collision or challenge end, ordered bounded input, and plausible elapsed wall time. Requests have streaming payload limits; attempts expire; per-IP rate budgets and atomic one-submission-per-attempt logic limit spam and handle duplicate retries. The D1 leaderboard is scoped by challenge and rule version, and retains replays. Aliases are unauthenticated and are not unique identities. Replay validation is not complete bot prevention or an onchain result.
 
-Cloudflare Worker `squeek-run-api` and D1 `squeek-run-leaderboard` are separate from the static Sites frontend. `wrangler.jsonc` contains public resource IDs only. `migrations/` owns the schema. Local preview uses its own ignored `.data/local.sqlite`, never production data. Deployment commands read the existing key file via `scripts/cloudflare.mjs`; no credentials are copied into this repository.
+Cloudflare Worker `squeek-run-api` now serves the static game, wallet authentication, replay API and D1 `squeek-run-leaderboard` on one origin. The earlier Sites preview is retained. `wrangler.jsonc` contains public resource IDs only. `migrations/` owns the schema. Local preview uses its own ignored `.data/local.sqlite`, never production data. Deployment commands read the existing key file via `scripts/cloudflare.mjs`; no credentials are copied into this repository.
 
 The interface imports a local snapshot of design-system v3 `web.css` (hash recorded in `design-tokens.css`), uses compact spacing, and preserves the requested monochrome game art.
 
 ## Verification and submission limits
 
-24 automated tests cover captured source interpretation, stale/simulated data, jumps/collision, deterministic full replay, entire obstacle sequences, changing speeds, malicious payloads, duplicates, expiration and rate limits. Browser smoke testing is separate from these automated checks.
+28 automated tests cover captured source interpretation, stale/simulated data, jumps/collision, deterministic full replay, entire obstacle sequences, changing speeds, malicious payloads, duplicates, expiration and rate limits. Browser smoke testing is separate from these automated checks.
 
-No wallet, transactions, SQK prizes, IMD job or paid submission has been created. Before the first IMD job, use a regular externally owned wallet verified on the Genesis profile; the first payer determines the project owner. Verify current IMD/Genesis submission requirements immediately before submitting. Direct-domain submissions were reported paused by the owner; this build does not claim that restriction has changed or that it qualifies for a badge.
+Wallet sign-in and Sepolia read-only integration are implemented. No transaction, token approval, SQK prize, IMD job or paid submission has been created. Before the first IMD job, use a regular externally owned wallet verified on the Genesis profile; the first payer determines the project owner. Verify current IMD/Genesis submission requirements immediately before submitting. Direct-domain submissions were reported paused by the owner; this build does not claim that restriction has changed or that it qualifies for a badge.
 
 Official references: https://docs.squeekchain.com/developers/api/ and https://docs.squeekchain.com/developers/build-with-ai/ .
+
+## Wallet and direct Sepolia integration
+
+Open the Cloudflare URL in a browser with MetaMask, Rabby or another EIP-1193/EIP-6963 wallet. Connect, switch to Sepolia (`11155111` / `0xaa36a7`), and review the SIWE message. Regular EOA wallets are supported; contract-wallet signatures and WalletConnect mobile pairing are not included. A one-time five-minute nonce is bound to the game origin, wallet and Sepolia. The server recovers the signer, consumes the nonce atomically and creates a one-day HttpOnly/Secure/SameSite=Strict session. Private keys never enter the application. Account/network changes invalidate the browser session.
+
+Sign in **before** starting a shared challenge. Submit its replay after finishing to save the checked result. Progress is restored by the same authenticated wallet on another device. Anonymous attempts cannot be attributed to an arbitrary wallet in the request body; wallet attempts require the same wallet session at submission. Public entries show a shortened verified address. Practice remains device-local. Game scores/progress are stored offchain in D1, not on Sepolia.
+
+`/api/chain` reads Sepolia RPC at one block 12 blocks behind the tip, checks both EIP-1967 proxies, implementation bytecode hashes/versions/layouts, governance, graph links, core configuration, block-unit arithmetic and the certified frontier, then checks that block hash again. Mismatches fail closed. The approved deployment record and ABI snapshots are fetched from official documentation and committed in `evidence/`. Results cache for 45 seconds and display their checked time. Hardware API values and direct contract values are labelled separately; they are not assumed to describe the same frontier or installation. No API value is used to construct a transaction.
+
+Production checks on 2026-11-05: signature login/session restore/logout succeeded using an ephemeral QA account; direct RPC graph verification succeeded. Automated tests additionally reject wrong signatures, reused/expired nonces, wrong domains, fake sessions, mismatched attempt owners and non-Sepolia RPCs. The app browser has no wallet extension, so the real MetaMask/Rabby approval UI still requires a user's wallet-equipped browser.

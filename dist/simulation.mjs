@@ -1,9 +1,11 @@
 import {PATTERNS,randomSource} from './engine.mjs';
 
-export const RULES='wheel-3';
+export const RULES='wheel-4';
 export const HZ=120, MAX_TICKS=7200, MAX_INPUTS=600;
 // Solid obstacles live in wheel space: angle around the rim x height above the rim.
 // The hamster stands at angle 0 (6 o'clock); its feet are at run.height, its body is BODY_H tall.
+// Pacing: groups sit 1.7-2.2 rad apart (about 1.5-2.5 s at typical wheel speeds). 64 groups cover the longest run (1.4 rad/s x 60 s).
+export const FIRST_GROUP=2.8, GAP_MIN=1.7, GAP_MAX=2.2, GROUPS=64;
 const RADIUS=228, HAMSTER_HALF=17/RADIUS, BODY_H=26, STEP=6, EPS=1e-6;
 function solidsAtHamster(run){
   const solids=[];
@@ -19,8 +21,9 @@ function solidsAtHamster(run){
 export function createRun(challenge){
   if(challenge.rules!==RULES)throw Error('Unsupported rules');
   const random=randomSource(BigInt(challenge.seed));
-  // Every group starts beyond the hidden half. A full flight/recovery gap separates groups.
-  const groups=Array.from({length:34},(_,i)=>({offset:-(2.8+i*3.4),parts:PATTERNS[Math.floor(random()*PATTERNS.length)].map(p=>({...p})),passed:false}));
+  // Every group starts beyond the hidden half. Gaps are 1.7-2.2 rad: busy, and still finishable at every supported speed.
+  let at=FIRST_GROUP;
+  const groups=Array.from({length:GROUPS},()=>{const group={offset:-at,parts:PATTERNS[Math.floor(random()*PATTERNS.length)].map(p=>({...p})),passed:false};at+=GAP_MIN+random()*(GAP_MAX-GAP_MIN);return group;});
   return {tick:0,height:0,velocity:0,jumps:0,angle:0,speed:0,score:0,passed:0,dead:false,complete:false,groups};
 }
 export function targetSpeed(challenge,tick){

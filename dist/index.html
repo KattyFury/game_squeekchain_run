@@ -57,4 +57,13 @@
   <p id="telemetry">SQUEEKCHAIN / CHECKING</p><p>RULES wheel-2 · 120 Hz · <a href="https://docs.squeekchain.com/developers/api/" target="_blank" rel="noreferrer">Squeekchain API ↗</a></p>
 </dialog>
 
+<div id="toast" popover="manual" role="status" aria-live="polite" hidden></div>
+<dialog id="wallet-dialog" aria-labelledby="wallet-help-title">
+  <div class="dlg-head"><h2 id="wallet-help-title">Connect a wallet</h2><button class="quiet close" data-close aria-label="Close">✕</button></div>
+  <p><strong>No wallet was found in this browser.</strong> Wallets connect through a browser extension on desktop, or through the wallet app's own browser on a phone. Telegram and most in-app browsers do not have one.</p>
+  <p>On a phone, open this page inside your wallet app:</p>
+  <div class="actions"><a class="btn" id="help-metamask" target="_blank" rel="noreferrer">MetaMask</a><a class="btn" id="help-coinbase" target="_blank" rel="noreferrer">Coinbase Wallet</a><a class="btn" id="help-trust" target="_blank" rel="noreferrer">Trust Wallet</a><button id="help-copy" class="quiet">Copy link</button></div>
+  <p class="note">On desktop, install <a href="https://metamask.io/download/" target="_blank" rel="noreferrer">MetaMask</a> or <a href="https://rabby.io/" target="_blank" rel="noreferrer">Rabby</a>, then reload this page. You can still play without a wallet; a wallet is only needed to rank runs and save them onchain.</p>
+</dialog>
+
 </main><script type="module" src="game.js"></script></body></html>

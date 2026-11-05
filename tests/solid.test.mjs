@@ -40,4 +40,10 @@ test('bumping the head under a floating bar stops the jump but does not end the 
   assert(bumped,'no timing produced a head bump');
 });
 
-test('rules identifier changed with the physics',()=>{assert.equal(RULES,'wheel-3');});
+test('rules identifier changed with the physics and pacing',()=>{assert.equal(RULES,'wheel-4');});
+test('groups are spaced 1.7-2.2 rad apart and cover the longest possible run',async()=>{
+  const {FIRST_GROUP,GAP_MIN,GAP_MAX}=await import('../simulation.mjs');
+  for(const seed of ['1','53','991']){const run=createRun({...challenge,seed});const offsets=run.groups.map(g=>-g.offset);
+    assert.equal(offsets[0],FIRST_GROUP);for(let i=1;i<offsets.length;i++){const gap=offsets[i]-offsets[i-1];assert(gap>=GAP_MIN-1e-9&&gap<=GAP_MAX+1e-9,'gap '+gap);}
+    assert(offsets.at(-1)>1.4*60+2,'groups must outlast a full 60 s run at top speed');}
+});

@@ -73,3 +73,9 @@ td a{color:inherit}
   #wallet-connect{padding:6px 10px}
 }
 @media(max-height:480px){main{gap:4px}}
+
+#toast{position:fixed;inset:auto auto max(16px,env(safe-area-inset-bottom)) 50%;transform:translateX(-50%);margin:0;max-width:min(92vw,520px);width:max-content;background:#000;color:#fff;border:1px solid #000;border-radius:10px;padding:10px 14px;font-size:13px;line-height:18px;overflow-wrap:anywhere}
+#toast[data-kind=error]{background:#fff;color:#000;border:2px solid #000;font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.btn{display:inline-flex;align-items:center;min-height:40px;padding:6px 14px;border:1px solid var(--ds-color-line);border-radius:8px;font-weight:600;text-decoration:none;color:inherit}
+.btn:hover{background:#000;color:#fff}

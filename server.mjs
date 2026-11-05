@@ -5,7 +5,7 @@ DB.sqlite.exec(await fs.readFile(path.join(root,'migrations','0001_leaderboard.s
 if(!DB.sqlite.prepare('PRAGMA table_info(attempts)').all().some(c=>c.name==='wallet_address'))DB.sqlite.exec(await fs.readFile(path.join(root,'migrations','0002_wallet.sql'),'utf8'));
 if(!DB.sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='onchain_config'").get())DB.sqlite.exec(await fs.readFile(path.join(root,'migrations','0003_onchain.sql'),'utf8'));
 const challenge=JSON.parse(await fs.readFile(path.join(root,'evidence','challenge.json'),'utf8'));await DB.prepare('INSERT OR IGNORE INTO challenges VALUES (?,?,?)').bind(challenge.id,JSON.stringify(challenge),Date.now()).run();
-const assets=new Set(['index.html','style.css','design-tokens.css','game.js','engine.mjs','simulation.mjs','wallet.js','onchain.js']);
+const assets=new Set(['index.html','style.css','design-tokens.css','game.js','engine.mjs','simulation.mjs','wallet.js','onchain.js','toast.js']);
 http.createServer(async(req,res)=>{try{
   const url=new URL(req.url,'http://127.0.0.1:8787');
   if(url.pathname.startsWith('/api/')){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>16384){res.writeHead(413).end('Payload too large');return;}chunks.push(chunk);}const request=new Request(url,{method:req.method,headers:req.headers,...(size?{body:Buffer.concat(chunks)}:{})});const response=await worker.fetch(request,{DB});res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));return;}

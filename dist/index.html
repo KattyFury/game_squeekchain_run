@@ -37,8 +37,11 @@
 
 <dialog id="board-dialog" aria-labelledby="ranking-title">
   <div class="dlg-head"><h2 id="ranking-title">Leaderboard</h2><span id="challenge-state">Loading…</span><button class="quiet close" data-close aria-label="Close">✕</button></div>
-  <table><thead><tr><th scope="col">#</th><th scope="col">Runner</th><th scope="col">Score</th><th scope="col">Time</th></tr></thead><tbody id="leaderboard"><tr><td colspan="4">Loading leaderboard…</td></tr></tbody></table>
+  <div class="tabs" role="tablist"><button id="tab-run" role="tab" aria-selected="true" data-tab="run">Checked runs</button><button id="tab-chain" role="tab" aria-selected="false" data-tab="chain">Saved onchain</button></div>
+  <table id="board-run"><thead><tr><th scope="col">#</th><th scope="col">Runner</th><th scope="col">Score</th><th scope="col">Time</th></tr></thead><tbody id="leaderboard"><tr><td colspan="4">Loading leaderboard…</td></tr></tbody></table>
+  <table id="board-chain" hidden><thead><tr><th scope="col">#</th><th scope="col">Wallet</th><th scope="col">Score</th><th scope="col">Tx</th></tr></thead><tbody id="onchain-board"><tr><td colspan="4">Open this tab to read Sepolia.</td></tr></tbody></table>
   <p id="challenge-source" class="note">Practice scores stay on this device.</p>
+  <p class="note"><span class="badge">✦</span> holds at least one Squeek NFT. Holders also get a crown on their hamster when signed in.</p>
 </dialog>
 
 <dialog id="info-dialog" aria-labelledby="info-title">

@@ -7,12 +7,13 @@ window.dispatchEvent(new Event('eip6963:requestProvider'));
 if(window.ethereum)for(const [i,p] of (window.ethereum.providers||[window.ethereum]).entries())announce({uuid:'injected-'+i,name:p.isMetaMask?'MetaMask':p.isRabby?'Rabby':'Browser wallet'},p);
 function show(message){$('wallet-state').textContent=message;}
 async function request(path,body){const r=await fetch('/api/wallet/'+path,{method:body===undefined?'GET':'POST',credentials:'same-origin',headers:body===undefined?{}:{'Content-Type':'application/json'},...(body===undefined?{}:{body:JSON.stringify(body)}),signal:AbortSignal.timeout(15000)});const j=await r.json();if(!r.ok)throw Error(j.error||'Wallet service unavailable');return j;}
+async function loadHolder(){try{const r=await fetch('/api/holder',{credentials:'same-origin',signal:AbortSignal.timeout(15000)});const j=await r.json();if(!r.ok)throw Error();window.dispatchEvent(new CustomEvent('squeek:holder',{detail:j}));if(j.holder&&address)$('wallet-state').textContent=short(address)+' · Sepolia · ✦ '+j.squeeks+' Squeek'+(j.squeeks===1?'':'s');}catch{window.dispatchEvent(new CustomEvent('squeek:holder',{detail:{holder:false}}));}}
 export async function refreshProgress(){
   const version=sequence;try{const progress=await request('progress');if(version!==sequence)return;
     address=progress.address;$('wallet-disconnect').hidden=!address;$('wallet-connect').textContent=address?'Switch wallet':'Connect wallet';
     if(progress.latestAttempt)window.dispatchEvent(new CustomEvent('squeek:verified-run',{detail:progress.latestAttempt}));
-    if(address){show(short(address)+' · Sepolia');$('wallet-progress').textContent=progress.entries.length?progress.entries.map(e=>e.runs+' checked run'+(e.runs===1?'':'s')+' · best '+e.best_score+' · challenge '+e.challenge_id.slice(0,8)).join(' / '):'Wallet verified. Play a shared challenge to save your first run.';}
-    else{show('');$('wallet-progress').textContent='Practice stays local. Signed-in shared runs are saved to your wallet address.';}
+    if(address){loadHolder();show(short(address)+' · Sepolia');$('wallet-progress').textContent=progress.entries.length?progress.entries.map(e=>e.runs+' checked run'+(e.runs===1?'':'s')+' · best '+e.best_score+' · challenge '+e.challenge_id.slice(0,8)).join(' / '):'Wallet verified. Play a shared challenge to save your first run.';}
+    else{window.dispatchEvent(new CustomEvent('squeek:holder',{detail:{holder:false}}));show('');$('wallet-progress').textContent='Practice stays local. Signed-in shared runs are saved to your wallet address.';}
   }catch(e){show(e.message);}
 }
 async function invalidate(){sequence++;address=null;chain=null;show('Wallet changed. Sign in again to save progress.');$('wallet-progress').textContent='Previous saved progress remains associated with its original wallet.';$('wallet-disconnect').hidden=true;try{await request('logout',{});}catch{}}

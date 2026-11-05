@@ -57,6 +57,11 @@ th{background:var(--ds-color-mist);font-weight:600}
 td:nth-child(n+3),th:nth-child(n+3){text-align:right}
 td:nth-child(2){overflow-wrap:anywhere;max-width:240px}
 .note{color:var(--ds-color-grey)}
+.tabs{display:flex;gap:4px;margin-top:8px}
+.tabs button{min-height:32px;padding:2px 12px;font-weight:400;color:var(--ds-color-grey)}
+.tabs button[aria-selected=true]{background:#000;color:#fff;border-color:#000}
+.badge{display:inline-block;margin-left:4px;font-size:11px;border:1px solid var(--ds-color-ink);border-radius:999px;padding:0 5px;line-height:16px;color:var(--ds-color-ink)}
+td a{color:inherit}
 
 @media(max-width:640px){
   main{padding-left:8px;padding-right:8px;gap:6px}

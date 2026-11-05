@@ -1,159 +1,167 @@
 {
   "network": "sepolia",
   "chainId": 11155111,
-  "release": "squeeks-sepolia-core3-mining6-001",
-  "qualification": "Sepolia testnet smoke qualification only; no mainnet deployment",
-  "sourceRevision": "89ecd8f1f54f5c5bef89660c070eb54b34ef8509",
-  "deploymentBlock": 11902282,
+  "release": "core-sepolia-20261103",
+  "revision": 7,
+  "protocolRevision": "staged-launch-1",
+  "rewardModelRevision": "funded-stream-q128-1",
+  "profile": "staging",
+  "qualification": "Sepolia testnet, for testing only; not a mainnet deployment",
+  "deploymentBlock": 12057556,
   "explorer": "https://eth-sepolia.blockscout.com",
   "contracts": {
     "SqueekCore": {
-      "address": "0x74665dAecA35A2303e767E76a2FF1FB6F93e119f",
+      "address": "0xfd6c166d4b8e2962e65746a13e5a0797cd4de0c4",
       "kind": "transparent proxy",
-      "implementation": "0x0a71c86ab63a77675002a389fdf4d096a07b11e2",
-      "implementationRuntimeHash": "0xe8a5a5aa913141ddd8951cf9fcc1375044b541773e5b0bf8ee04a5c7ac2d194d",
+      "deployedAtBlock": 12057556,
+      "sourceRevision": "32a02106515fd723cba18c2e8993ffb30eb6997f",
+      "implementation": "0x6869d6102696243fd17013ab955d99cd0c522ad3",
+      "implementationRuntimeHash": "0x65b5780a4fccafedeca1260806364d2bb512b4501c097253f792ae2839565a9c",
       "implementationVersion": 3,
       "storageLayoutDigest": "0x9a9c008e029460808209571703fbf2679785874e0e6d3232f16a864d12abcb20",
-      "proxyAdmin": "0x05a9af6c3f6780dd58168f2e145cdd0d64564a5e",
-      "deployedAtBlock": 11902282,
+      "proxyAdmin": "0x21b3cb8f00d0d47b246a57d04152d6e11d24abb3",
       "abi": "/assets/abi/SqueekCore.json"
     },
-    "SqueekMining": {
-      "address": "0x3beE588fC20dE788Bac17d33b41Da7346cb27EC4",
-      "kind": "transparent proxy",
-      "implementation": "0x08890b360c65fd878344bf6e23d1c36358433b4e",
-      "implementationRuntimeHash": "0x6097cf8e8f96ea654878ab0a35410240ab1b05668c08ce1b3f99e04116e88bc1",
-      "implementationVersion": 6,
-      "storageLayoutDigest": "0xace564e9c052f30122779a32fdf3333ebce7cc708eae9c01cb7875b4f6ad37a6",
-      "proxyAdmin": "0x7369d930f8dfb7a6657578eda5906d3472e4ac9a",
-      "deployedAtBlock": 11902290,
-      "abi": "/assets/abi/SqueekMining.json"
-    },
-    "SqueekToken": {
-      "address": "0x6872bfa5ccc3e9e440c6c16e5ffdabb8dba4cc76",
-      "kind": "immutable",
-      "abi": "/assets/abi/SqueekToken.json"
-    },
     "SqueekNFT": {
-      "address": "0x0eAF3E0d40A0a8E5a6Ac030b2459E9FB0B7905c6",
+      "address": "0xc4c7982657f00509548f3a3a41db7fa439a6856b",
       "kind": "immutable",
+      "deployedAtBlock": 12057769,
+      "sourceRevision": "ca83be366795818b40064a1500da8df704355115",
+      "runtimeHash": "0xa378da21bde37bb0f4c4f482d3f7c502d59d31551521d64ee297d37aa6d88b8c",
       "abi": "/assets/abi/SqueekNFT.json"
     },
-    "DotGridRenderer": {
-      "address": "0x2dC7661D172fEf0FC900E0aD0f4ffCE68E8bfD75",
+    "SqueekToken": {
+      "address": "0xd78a3956cf63164d1fa1c622ad3c66623162fa1e",
       "kind": "immutable",
+      "deployedAtBlock": 12058083,
+      "sourceRevision": "ca83be366795818b40064a1500da8df704355115",
+      "runtimeHash": "0x6d6ea1d4143a02637e905d4d923b48f78f81f46aa1169f5004f5a150a2433329",
+      "abi": "/assets/abi/SqueekToken.json"
+    },
+    "SqueekMining": {
+      "address": "0x2dccb11fcc2defdd188555e45acb52231e82e218",
+      "kind": "guarded transparent proxy",
+      "deployedAtBlock": 12058093,
+      "sourceRevision": "ca83be366795818b40064a1500da8df704355115",
+      "implementation": "0x32639fc0bbd16ba0b140f78950751591609cfaa4",
+      "implementationRuntimeHash": "0xbcc7179f61610f44cf19a8fe4ffe27c06cba083a9430eb2787c5807b30e1e959",
+      "implementationVersion": 10,
+      "storageLayoutDigest": "0xd6b3c14eaf89f7fc4406a878b162d146dc32a171907d2571bc7ba1d2d34763a1",
+      "proxyAdmin": "0xd857f72f7f73bb8b8050c14e923ff4e05f7d75cb",
+      "abi": "/assets/abi/SqueekMining.json"
+    },
+    "SqueekStaking": {
+      "address": "0x50fd1780526c3186a0c037c7622203bc4fb611ca",
+      "kind": "guarded transparent proxy",
+      "deployedAtBlock": 12058156,
+      "sourceRevision": "ca83be366795818b40064a1500da8df704355115",
+      "implementation": "0xf7027f9759d98190638359920e0422d316b4ea92",
+      "implementationRuntimeHash": "0xb379b434af414fccf7fbb03105e07a527aba86bec169cdd7afadc640c4104bd1",
+      "implementationVersion": 3,
+      "storageLayoutDigest": "0xc7d9d27b142e9eea9117d439e8c387fdffa8d777ea2c7ea2668654986b085e45",
+      "proxyAdmin": "0x08aa8200b2a5a863b1eb8396914c49f96f325425",
+      "abi": "/assets/abi/SqueekStaking.json"
+    },
+    "DotGridRenderer": {
+      "address": "0x50888ea2469cc4e619bfcbdc4a7e7d58d4ddd165",
+      "kind": "immutable",
+      "runtimeHash": "0x831fc9ead3d7bde1c3f7a8366f60f3fc8381cfd31f370ed57b5502a414d8e141",
       "abi": "/assets/abi/DotGridRenderer.json"
     },
     "DotGridPageValidator": {
-      "address": "0xA674943387967cEBEf3C2110026A56F0A78d7F24",
+      "address": "0xa605e7a53bde1bba13bd6109a55b9c0d8ea90ad7",
       "kind": "immutable",
+      "runtimeHash": "0xbf76fa9968a36d51a0f9ca9cc9a723f4fa3e5589e1ec5188c08208747d9ed55c",
       "abi": "/assets/abi/DotGridPageValidator.json"
+    },
+    "SqueekMiningFactory": {
+      "address": "0xa25268579197e03f255a35777c9a666caf6a4f4e",
+      "kind": "deployment tooling",
+      "deployedAtBlock": 12058089,
+      "sourceRevision": "ca83be366795818b40064a1500da8df704355115",
+      "runtimeHash": "0xc9f7c8cd80d6eb1ce42a355daa300b112b8523b1a929266bf0e65b9771e208a8"
+    },
+    "SqueekAuthMinter": {
+      "address": "0xe78b4420ce205b8864f2f326f3181f9dd5ea8b5f",
+      "kind": "immutable, testnet only",
+      "deployedAtBlock": 12057772,
+      "sourceRevision": "ca83be366795818b40064a1500da8df704355115",
+      "runtimeHash": "0x3ecf8882bf2f44e85f4df3a3c1846475d65f3ec72f48afa0ec24bd96041b0d0a"
     }
   },
   "operational": {
     "governanceTimelock": {
-      "address": "0x6B35AB6E96EF292E4fdD3f15a4E812f3CA291844",
-      "role": "Owns both ProxyAdmins and is SqueekNFT governance; open executor; proposer is the governance Safe",
-      "minDelaySeconds": 60
+      "address": "0xaa2e9621de9ac23cbb36d1a1bac4c8b0694cc30d",
+      "role": "The admin Timelock: owns the three ProxyAdmins; admin of SqueekNFT, SqueekMining and SqueekStaking; SqueekToken's Mining binding authority; open executor",
+      "minDelaySeconds": 300
     },
     "governanceSafe": {
-      "address": "0x83a8d3e5ed02e5201a996c3f03e017b6a6c19d31",
-      "role": "Sole timelock proposer and controller of the Guardian role contract",
+      "address": "0x3a83a80b9249eca85a9540ec878bd968f13cb676",
+      "role": "Timelock proposer and canceller; controls the Guardian; treasury premint recipient",
       "threshold": 1,
       "owners": 1
     },
     "guardian": {
-      "address": "0x0E1B21ED2fc5fc48E221D3E863f09589Cb490e73",
-      "role": "Guardian role contract controlled by the governance Safe; pauses SqueekCore and SqueekNFT minting"
+      "address": "0xb2826926ef5cffebef86037c27b48ce345ed691f",
+      "role": "Guardian of SqueekCore, SqueekNFT and SqueekMining, controlled by the admin Safe"
     },
     "reporter": {
-      "address": "0xB317AB7Cc24fD5d94EA120B3b189bc6527a7d0Aa",
-      "role": "Reporter signer whose EIP-712 signature authorizes each settlement; sends no transactions"
+      "address": "0x71f47c02431e6995cf6f757c14bc6bfa443d0a86",
+      "role": "Signs settlement authorizations"
     },
-    "relayer": {
-      "address": "0xd3c8e8df661f055becb6a20dad479f4dcc6f7cd7",
-      "role": "Submits Reporter-signed settlements and pays gas"
-    },
-    "keeper": {
-      "address": "0x64822a06193ddff61c0de95a0d515bc344d5e433",
-      "role": "Submits SqueekMining checkpoints; any account can"
-    },
-    "economicRecipient": {
-      "address": "0x828cb04dbf0bdd8eb35d19045638a1af6e3d17e8",
-      "role": "Hamster-Owned Liquidity Safe (SqueekNFT economicRecipient, threshold 1): protocol reserve, sale closeout, royalties"
+    "reserveCustodySafe": {
+      "address": "0xd5dab9f1d15e9d45548078726c54732a5b59eb78",
+      "role": "SqueekNFT protocol recipient; holds the protocol reserve Squeeks and the liquidity premint; depositor of the reserve stake"
     },
     "dotGridPage": {
-      "address": "0x8dd828dab7471589b0123a99747408bc04f81567",
-      "role": "DotGrid page root holding the Squeeks image data (SqueekNFT art())"
+      "address": "0x0677aca34747cd8e60f988f75e2f89d5e00bb27d",
+      "role": "Squeeks image data page root",
+      "runtimeHash": "0x7f290cfbff7cfbfd7d3c1a04733998d3979bd2e374f359d28a6af4e82136659a"
     }
   },
-  "coreConfiguration": {
-    "streamId": "0xa0186b1a24b217f12f56c8574b492e286d00cd94bb5546cba45b048b19c60e44",
-    "genesisTimestamp": 1791847800,
-    "roundDuration": 600,
-    "maxWorkPerRound": 10000,
-    "maxRoundsPerBatch": 16,
-    "guardian": "0x0E1B21ED2fc5fc48E221D3E863f09589Cb490e73",
-    "reporter": "0xB317AB7Cc24fD5d94EA120B3b189bc6527a7d0Aa",
-    "initialWorkPerThousandBlocks": 10875,
-    "targetBlocksPerActiveRound": 40,
-    "difficultySmoothingRounds": 30,
-    "blockUnitsPerBlock": 1000000000
-  },
-  "squeeksPolicy": {
-    "collection": 0,
-    "maximumLevel": 10,
-    "levels": [
-      {
-        "level": 1,
-        "weight": 1000,
-        "cooldownBlocks": 2
-      },
-      {
-        "level": 2,
-        "weight": 3000,
-        "cooldownBlocks": 4
-      },
-      {
-        "level": 3,
-        "weight": 7000,
-        "cooldownBlocks": 6
-      },
-      {
-        "level": 4,
-        "weight": 15000,
-        "cooldownBlocks": 8
-      },
-      {
-        "level": 5,
-        "weight": 31000,
-        "cooldownBlocks": 10
-      },
-      {
-        "level": 6,
-        "weight": 63000,
-        "cooldownBlocks": 12
-      },
-      {
-        "level": 7,
-        "weight": 127000,
-        "cooldownBlocks": 14
-      },
-      {
-        "level": 8,
-        "weight": 255000,
-        "cooldownBlocks": 16
-      },
-      {
-        "level": 9,
-        "weight": 511000,
-        "cooldownBlocks": 18
-      },
-      {
-        "level": 10,
-        "weight": 1023000,
-        "cooldownBlocks": 0
+  "launchConfiguration": {
+    "tokenPremint": {
+      "totalSqk": "210000000",
+      "teamSqk": "63000000",
+      "treasurySqk": "63000000",
+      "liquiditySqk": "84000000"
+    },
+    "issuance": {
+      "allowanceSqk": "1890000000",
+      "launchBonusSqk": "105000000",
+      "bonusBlocks": 97020,
+      "halvingBlocks": 393470
+    },
+    "squeeks": {
+      "testDistributionTokenIds": "1-8888",
+      "protocolReserveTokenIds": "8889-9888",
+      "teamTokenIds": "9889-9999",
+      "reserveStakeTokenId": 8889
+    },
+    "core": {
+      "streamId": "0xa78faebd5aad38b4f90c7f61b9c5c10e8d9b9afe74ebfc2e82ca98b7e57ed562",
+      "genesisTimestamp": 1793735400,
+      "roundDurationSeconds": 600,
+      "maxWorkPerRound": 10000,
+      "maxRoundsPerBatch": 16,
+      "initialWorkPerThousandBlocks": 10875,
+      "targetBlocksPerActiveRound": 40,
+      "difficultySmoothingRounds": 30,
+      "blockUnitsPerBlock": 1000000000
+    },
+    "stakingPower": {
+      "basePowerFormula": "round(1000 × 2.2^(level − 1))",
+      "basePowerByLevel": [1000, 2200, 4840, 10648, 23426, 51536, 113380, 249436, 548759, 1207269],
+      "sqkPowerFormula": "Q = S / c × (1 + P / P_ref)",
+      "sqkPerPowerSqk": "40",
+      "referencePower": 1000,
+      "exitPolicy": {
+        "minBps": 200,
+        "maxBps": 6000,
+        "saturationBps": 2000,
+        "windowUtcDays": 7,
+        "pressureFloorSqk": "21000000"
       }
-    ]
+    }
   }
 }

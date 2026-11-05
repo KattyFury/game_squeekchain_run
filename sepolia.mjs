@@ -20,9 +20,12 @@ export async function readSepoliaSnapshot(rpc='https://ethereum-sepolia-rpc.publ
     if(!code||!same(keccak256(code),expected.implementationRuntimeHash)||!same(reported,impl)||version!==BigInt(expected.implementationVersion)||!same(layout,expected.storageLayoutDigest)||!same(owner,manifest.operational.governanceTimelock.address))throw Error(name+' implementation verification failed');
   }));
   const core=manifest.contracts.SqueekCore.address,mining=manifest.contracts.SqueekMining.address;
-  const [miningCore,tokenMining,policy,config,state]=await Promise.all([read(mining,miningAbi,'core'),read(manifest.contracts.SqueekToken.address,identity,'mining'),read(mining,miningAbi,'collectionPolicy',[0]),read(core,coreAbi,'configuration'),read(core,coreAbi,'state')]);
-  if(!same(miningCore,core)||!same(tokenMining,mining)||!same(policy.nft,manifest.contracts.SqueekNFT.address))throw Error('Squeekchain graph mismatch');
-  for(const [key,value] of Object.entries(manifest.coreConfiguration)){if(!(key in config))continue;if(typeof config[key]==='bigint'?config[key]!==BigInt(value):typeof config[key]==='string'?!same(config[key],value):config[key]!==value)throw Error('Core configuration mismatch: '+key);}
+  const link=parseAbi(['function core() view returns (address)','function mining() view returns (address)','function token() view returns (address)']);
+  const staking=manifest.contracts.SqueekStaking.address;
+  const [miningCore,tokenMining,stakingCore,stakingMining,stakingToken,config,state]=await Promise.all([read(mining,miningAbi,'core'),read(manifest.contracts.SqueekToken.address,identity,'mining'),read(staking,link,'core'),read(staking,link,'mining'),read(staking,link,'token'),read(core,coreAbi,'configuration'),read(core,coreAbi,'state')]);
+  if(!same(miningCore,core)||!same(tokenMining,mining)||!same(stakingCore,core)||!same(stakingMining,mining)||!same(stakingToken,manifest.contracts.SqueekToken.address))throw Error('Squeekchain graph mismatch');
+  const expectedCore=manifest.coreConfiguration||{...manifest.launchConfiguration.core,roundDuration:manifest.launchConfiguration.core.roundDurationSeconds};
+  for(const [key,value] of Object.entries(expectedCore)){if(!(key in config))continue;if(typeof config[key]==='bigint'?config[key]!==BigInt(value):typeof config[key]==='string'?!same(config[key],value):config[key]!==value)throw Error('Core configuration mismatch: '+key);}
   if(state.blockHeight!==state.cumulativeBlockUnits/config.blockUnitsPerBlock||state.blockProgress!==state.cumulativeBlockUnits%config.blockUnitsPerBlock)throw Error('Core state inconsistent');
   const frontier=await read(core,coreAbi,'roundPage',[state.settledThroughRound,state.settledThroughRound,0n]);
   if(frontier.certifiedThroughRound!==state.settledThroughRound||frontier.end.cumulativeBlockUnits!==state.cumulativeBlockUnits||frontier.end.workPerThousandBlocks!==state.workPerThousandBlocks)throw Error('Certified frontier mismatch');

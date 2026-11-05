@@ -47,7 +47,7 @@ $('save-onchain').addEventListener('click',async()=>{
     }
     transactionLink(hash);show('Submitted. Waiting for Sepolia to confirm…');
     try{await waitReceipt(provider,hash);}catch(e){if(e.reverted){store('squeek-score-save',null);throw Error('The transaction reverted onchain. Open it for details, then press Save onchain to try again.');}throw e;}
-    savedAttempt=attempt;store('squeek-score-save',null);await loadProgress();show('Saved on Sepolia. Open the transaction to inspect the RunSaved event.');
+    savedAttempt=attempt;store('squeek-score-save',null);window.dispatchEvent(new Event('squeek:saved'));await loadProgress();show('Saved on Sepolia. Open the transaction to inspect the RunSaved event.');
   }catch(e){show(explain(e));}finally{busy=false;render();}
 });
 async function loadProgress(){if(!config?.contract)return;try{const progress=await api('progress');$('onchain-progress').textContent=progress.wallet?progress.savedRuns+' run'+(progress.savedRuns==='1'?'':'s')+' saved onchain'+(progress.best?.ticks?' · best '+progress.best.score+' on challenge '+progress.best.challenge.slice(0,8):''):'Sign in to read your onchain progress.';if(progress.latestSaved)savedAttempt=progress.latestAttempt;render();}catch(e){$('onchain-progress').textContent='Could not read onchain progress: '+e.message;}}

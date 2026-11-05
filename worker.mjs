@@ -1,4 +1,4 @@
-import {onchainConfig,attestRun,onchainProgress} from './onchain.mjs';
+import {onchainConfig,attestRun,onchainProgress,onchainLeaderboard,holderStatus} from './onchain.mjs';import {squeekCounts} from './holders.mjs';
 import {walletSession,walletNonce,walletVerify,walletLogout} from './wallet-auth.mjs';
 import {readSepoliaSnapshot} from './sepolia.mjs';
 import {challengeFromRuns,digest} from './challenge.mjs';
@@ -35,6 +35,11 @@ export async function refreshChallenge(db){
 export async function api(request,env){
   const url=new URL(request.url),db=env.DB;if(!db)return json({error:'Leaderboard is not configured'},503);
   if(request.method==='GET'&&url.pathname==='/api/onchain/progress')return json(await onchainProgress(request,env));
+  if(request.method==='GET'&&url.pathname==='/api/holder')return json(await holderStatus(request,env));
+  if(request.method==='GET'&&url.pathname==='/api/onchain/leaderboard'){
+    const cache=globalThis.caches?.default,cacheKey=new Request(url.origin+'/api/onchain/leaderboard?challenge='+(url.searchParams.get('challenge')||'')),hit=cache?await cache.match(cacheKey):null;if(hit)return hit;
+    try{const body=await onchainLeaderboard(env,url.searchParams.get('challenge'));const response=Response.json(body,{headers:{'Cache-Control':'public, max-age=30'}});if(cache)await cache.put(cacheKey,response.clone());return response;}catch(e){return json({error:e.status?e.message:'Onchain leaderboard unavailable'},e.status||503);}
+  }
   if(request.method==='GET'&&url.pathname==='/api/onchain/config')return json(await onchainConfig(env));
   if(request.method==='POST'&&url.pathname==='/api/onchain/attest'){await limit(request,db,'attest',10);return json(await attestRun(request,env,await readBody(request,1024)));}
   if(request.method==='GET'&&url.pathname==='/api/chain'){
@@ -53,7 +58,7 @@ export async function api(request,env){
   }
   if(request.method==='GET'&&url.pathname==='/api/leaderboard'){
     const id=url.searchParams.get('challenge');if(!/^[a-f0-9]{64}$/.test(id||''))return json({error:'Invalid challenge'},400);
-    const {results}=await db.prepare('SELECT name,score,ticks,completed,created_at,wallet_address FROM entries WHERE challenge_id=? AND rules=? ORDER BY score DESC,ticks ASC,created_at ASC LIMIT 20').bind(id,RULES).all();return json({entries:results});
+    const {results}=await db.prepare('SELECT name,score,ticks,completed,created_at,wallet_address FROM entries WHERE challenge_id=? AND rules=? ORDER BY score DESC,ticks ASC,created_at ASC LIMIT 20').bind(id,RULES).all();const counts=await squeekCounts(env,results.map(r=>r.wallet_address).filter(Boolean)).catch(()=>({}));return json({entries:results.map(r=>({...r,squeeks:r.wallet_address?counts[r.wallet_address]??null:null}))});
   }
   if(request.method==='POST'&&url.pathname==='/api/attempt'){
     await limit(request,db,'start',8);const body=await readBody(request,1024);
@@ -93,5 +98,5 @@ export default {
     else try{response=await api(request,env);}catch(e){console.error(JSON.stringify({event:'api_error',type:e.name}));response=json({error:e.status?e.message:e instanceof SyntaxError?'Invalid JSON':e.message?.startsWith('Invalid')||e.message?.startsWith('Replay')?e.message:'Service unavailable'},e.status||(e.message?.startsWith('Invalid')||e.message?.startsWith('Replay')?400:503));}
     const headers=new Headers(response.headers);if(allowed){headers.set('Access-Control-Allow-Origin',origin);headers.set('Vary','Origin');headers.set('Access-Control-Allow-Methods','GET, POST, OPTIONS');headers.set('Access-Control-Allow-Headers','Content-Type');headers.set('Access-Control-Allow-Credentials','true');}if(response.status===429)headers.set('Retry-After','60');return new Response(response.body,{status:response.status,headers});
   },
-  async scheduled(event,env,ctx){ctx.waitUntil((async()=>{await refreshChallenge(env.DB);await env.DB.batch([env.DB.prepare('DELETE FROM rate_limits WHERE expires_at<?').bind(Date.now()),env.DB.prepare('DELETE FROM wallet_nonces WHERE expires_at<?').bind(Date.now()),env.DB.prepare('DELETE FROM wallet_sessions WHERE expires_at<?').bind(Date.now()),env.DB.prepare('DELETE FROM attempts WHERE submitted_at IS NULL AND expires_at<?').bind(Date.now()-86400000)]);})());}
+  async scheduled(event,env,ctx){ctx.waitUntil((async()=>{await env.DB.batch([env.DB.prepare('DELETE FROM rate_limits WHERE expires_at<?').bind(Date.now()),env.DB.prepare('DELETE FROM wallet_nonces WHERE expires_at<?').bind(Date.now()),env.DB.prepare('DELETE FROM wallet_sessions WHERE expires_at<?').bind(Date.now()),env.DB.prepare('DELETE FROM attempts WHERE submitted_at IS NULL AND expires_at<?').bind(Date.now()-86400000)]);})());}
 };

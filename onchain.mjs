@@ -1,7 +1,7 @@
 import {createPublicClient,http,keccak256,toHex,encodeFunctionData} from 'viem';
 import {sepolia} from 'viem/chains';import {privateKeyToAccount} from 'viem/accounts';
 import artifact from './contracts/artifacts/SqueekRunScores.json' with {type:'json'};
-import {walletSession} from './wallet-auth.mjs';import {validateReplay,RULES} from './simulation.mjs';
+import {walletSession} from './wallet-auth.mjs';import {squeekCounts} from './holders.mjs';import deployed from './evidence/score-contract-deployment.json' with {type:'json'};import {validateReplay,RULES} from './simulation.mjs';
 export const resultTypes={RunResult:[{name:'player',type:'address'},{name:'challengeId',type:'bytes32'},{name:'rulesHash',type:'bytes32'},{name:'replayHash',type:'bytes32'},{name:'runId',type:'bytes32'},{name:'score',type:'uint32'},{name:'ticks',type:'uint32'},{name:'completed',type:'bool'},{name:'deadline',type:'uint64'}]};
 const fail=(message,status=400)=>Object.assign(Error(message),{status});
 const client=env=>createPublicClient({chain:sepolia,transport:http(env.SEPOLIA_RPC_URL||'https://ethereum-sepolia-rpc.publicnode.com',{retryCount:0,timeout:12000})});
@@ -26,4 +26,26 @@ export async function onchainProgress(request,env){
   const rpc=client(env);if(await rpc.getChainId()!==11155111)throw fail('Wrong progress network',503);
   const [saved,best,used]=await Promise.all([rpc.readContract({address:config.contract,abi:artifact.abi,functionName:'savedRuns',args:[wallet]}),row?rpc.readContract({address:config.contract,abi:artifact.abi,functionName:'bestScores',args:[wallet,'0x'+row.challenge_id,keccak256(toHex(RULES))]}):null,row?rpc.readContract({address:config.contract,abi:artifact.abi,functionName:'usedRunIds',args:[keccak256(toHex(row.attempt_id))]}):false]);
   return {wallet,contract:config.contract,savedRuns:saved.toString(),best:best?{challenge:row.challenge_id,score:best[0],ticks:best[1],completed:best[2]}:null,latestAttempt:row?.attempt_id||null,latestSaved:used};
+}
+
+// Best saved run per wallet for one challenge, highest score first (ties: fewer ticks, then earlier block).
+export function topPlayers(runs,limit=20){
+  const best=new Map();
+  for(const run of runs){const key=run.player.toLowerCase(),current=best.get(key);
+    if(!current||run.score>current.score||run.score===current.score&&(run.ticks<current.ticks||run.ticks===current.ticks&&run.block<current.block))best.set(key,run);}
+  return [...best.values()].sort((a,b)=>b.score-a.score||a.ticks-b.ticks||(a.block<b.block?-1:1)).slice(0,limit);
+}
+export async function onchainLeaderboard(env,challengeId){
+  if(!/^[a-f0-9]{64}$/.test(challengeId||''))throw fail('Invalid challenge');
+  const config=await onchainConfig(env);if(!config.contract)return {contract:null,entries:[]};
+  const event=artifact.abi.find(x=>x.type==='event'&&x.name==='RunSaved'),rulesHash=keccak256(toHex(RULES));
+  const fromBlock=deployed.contract?.toLowerCase()===config.contract.toLowerCase()?BigInt(deployed.block):0n;
+  const logs=await client(env).getLogs({address:config.contract,event,args:{challengeId:'0x'+challengeId},fromBlock,toBlock:'latest'});
+  const top=topPlayers(logs.filter(l=>l.args.rulesHash===rulesHash).map(l=>({player:l.args.player,score:l.args.score,ticks:l.args.ticks,completed:l.args.completed,tx:l.transactionHash,block:l.blockNumber})));
+  const counts=await squeekCounts(env,top.map(r=>r.player)).catch(()=>({}));
+  return {contract:config.contract,entries:top.map(r=>({wallet:r.player.toLowerCase(),score:r.score,ticks:r.ticks,completed:r.completed,tx:r.tx,squeeks:counts[r.player.toLowerCase()]??null}))};
+}
+export async function holderStatus(request,env){
+  const wallet=await walletSession(request,env.DB);if(!wallet)return {wallet:null,squeeks:0,holder:false};
+  const counts=await squeekCounts(env,[wallet]),squeeks=counts[wallet]??0;return {wallet,squeeks,holder:squeeks>0};
 }

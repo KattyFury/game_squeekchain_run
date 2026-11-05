@@ -48,8 +48,29 @@ $('submit').addEventListener('click',async()=>{
   if(!lastReplay?.attempt)return;const saved=lastReplay,name=$('runner-name').value.trim();if(!/^[a-zA-Z0-9 _.-]{1,20}$/.test(name)){$('submission').textContent='Use 1–20 letters, numbers, spaces, dots or dashes.';return;}$('submit').disabled=true;$('submission').textContent='Checking replay on the server…';
   try{const response=await fetch(API+'/api/replay',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({attempt:saved.attempt,name,replay:saved.replay}),signal:AbortSignal.timeout(15000)});const body=await response.json();if(!response.ok)throw Error(body.error||'Submission failed');$('submission').textContent='Replay checked · '+body.score+' points · '+(body.ticks/HZ).toFixed(2)+'s. This is an offchain game result.';if(body.wallet)setEligibleRun(saved.attempt);await loadBoard();await refreshProgress();}catch(e){$('submission').textContent=e.message+' Your replay is still here; you can retry.';$('submit').disabled=false;}
 });
-const sprite=['      ####         ','    ########       ','   ##..##..##      ','  ##........#####  ',' ##..............# ','##...............##','##.........##.....#','##.........##.....#',' ##..............##','  ###..........### ','    ############   ','     ##      ##    '];
-function hamster(){const h=run?.height||0,s=3,x=cx-28,y=floor-h-36,bob=h===0&&state==='playing'?Math.floor(run.tick/10)%2:0;ctx.fillStyle='#000';for(let row=0;row<sprite.length;row++)for(let col=0;col<sprite[row].length;col++)if(sprite[row][col]==='#')ctx.fillRect(Math.round(x+col*s),Math.round(y+row*s)+bob,s,s);if(h===0){ctx.fillRect(cx-15+(bob?4:0),floor-2,9,3);ctx.fillRect(cx+12-(bob?4:0),floor-2,9,3);if(run&&run.tick-landingAt<16){ctx.fillStyle='#8B95A8';const spread=(run.tick-landingAt)*2;ctx.fillRect(cx-30-spread,floor-3,4,3);ctx.fillRect(cx+30+spread,floor-3,4,3);}}}
+// Hamster pixel art, built once from simple shapes: chubby body + head, ear, eye, nose, cheek, belly shading.
+// '#' outline/ink, '.' white fill, 'g' soft grey. Legs swap between two run frames and tuck in the air.
+const HW=16,HH=14,PX=3,ellipse=(x,y,cx,cy,rx,ry)=>((x-cx)/rx)**2+((y-cy)/ry)**2<=1;
+function hamsterFrame(frame){
+  const shape=(x,y)=>{x+=.5;y+=.5;return ellipse(x,y,6.6,9.2,6.4,4.2)||ellipse(x,y,11,6.8,4.8,4.4)||ellipse(x,y,8.4,2.4,2,2.2)||ellipse(x,y,15,7.6,1.3,1.2)||ellipse(x,y,.9,9.4,1.1,1.1)};
+  const g=Array.from({length:HH},()=>Array(HW).fill(' '));
+  for(let y=0;y<HH;y++)for(let x=0;x<HW;x++)if(shape(x,y))g[y][x]=[[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>!shape(x+dx,y+dy))?'#':'.';
+  const put=(x,y,c)=>{if(y>=0&&y<HH&&x>=0&&x<HW&&g[y][x]!==' ')g[y][x]=c;};
+  put(8,2,'g');put(8,3,'g');put(9,3,'g');                    // inner ear
+  put(12,5,'#');put(13,5,'#');put(12,6,'#');put(13,6,'#');   // eye
+  put(15,7,'#');put(15,8,'#');                               // nose tip
+  put(12,8,'g');put(13,8,'g');put(13,9,'g');                 // cheek
+  for(let x=3;x<=9;x++)put(x,11,'g');                        // belly
+  const feet=frame===2?[[4,5],[10,11]]:frame===0?[[3,5],[9,11]]:[[5,7],[8,10]];
+  for(const [x0,x1] of feet)for(let x=x0;x<=x1;x++){g[12][x]='#';if(frame!==2)g[13][x]='#';}
+  return g;
+}
+const FRAMES=[hamsterFrame(0),hamsterFrame(1),hamsterFrame(2)];
+function hamster(){
+  const h=run?.height||0,x=cx-HW*PX/2,y=floor-h-HH*PX+1,grounded=h===0||run?.velocity===0,frame=!run||state!=='playing'&&state!=='replay'?0:grounded?(Math.floor(run.tick/9)%2):2,g=FRAMES[frame];
+  for(let row=0;row<HH;row++)for(let col=0;col<HW;col++){const c=g[row][col];if(c===' ')continue;ctx.fillStyle=c==='#'?'#000':c==='g'?'#C9D1DE':'#fff';ctx.fillRect(Math.round(x+col*PX),Math.round(y+row*PX),PX,PX);}
+  if(grounded&&h===0&&run&&run.tick-landingAt<16){ctx.fillStyle='#8B95A8';const spread=(run.tick-landingAt)*2;ctx.fillRect(cx-30-spread,floor-3,4,3);ctx.fillRect(cx+30+spread,floor-3,4,3);}
+}
 function text(t,y,s=16){ctx.fillStyle='#000';ctx.font=s+'px monospace';ctx.textAlign='center';ctx.fillText(t,cx,y);}
 function draw(){const angle=run?.angle||0;ctx.fillStyle='#fff';ctx.fillRect(0,0,960,440);ctx.strokeStyle='#DCE3EE';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-85,388);ctx.lineTo(cx,cy);ctx.lineTo(cx+85,388);ctx.stroke();ctx.fillStyle='#ECF0F8';ctx.fillRect(cx-105,388,210,8);ctx.save();ctx.translate(cx,cy);ctx.rotate(angle);ctx.strokeStyle='#ECF0F8';ctx.lineWidth=3;for(let i=0;i<12;i++){ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(Math.cos(i*TAU/12)*(r-9),Math.sin(i*TAU/12)*(r-9));ctx.stroke();}ctx.restore();ctx.strokeStyle='#000';ctx.lineWidth=5;ctx.beginPath();ctx.arc(cx,cy,r+5,0,TAU);ctx.stroke();ctx.lineWidth=2;ctx.beginPath();ctx.arc(cx,cy,r-1,0,TAU);ctx.stroke();
   for(const o of run?.groups||[]){if(Math.abs(o.offset+angle)>2.5)continue;for(const {part,poly} of groupPolygons(o,angle,r,cx,cy)){ctx.fillStyle='#000';ctx.beginPath();poly.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();if(part.kind==='tower'){const seam=obstaclePolygon(Math.PI/2+o.offset+angle+part.delta,r-part.height/2,3,part.width+2,cx,cy);ctx.fillStyle='#fff';ctx.beginPath();seam.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();}if(part.kind==='air'){const a=Math.PI/2+o.offset+angle+part.delta;ctx.strokeStyle='#8B95A8';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);ctx.lineTo(cx+Math.cos(a)*(r-part.lift),cy+Math.sin(a)*(r-part.lift));ctx.stroke();}}}ctx.fillStyle='#fff';ctx.fillRect(0,0,960,cy);hamster();

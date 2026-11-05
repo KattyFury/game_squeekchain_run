@@ -1,7 +1,21 @@
-import {TAU,PATTERNS,randomSource,groupPolygons,intersectsPolygonBox} from './engine.mjs';
+import {PATTERNS,randomSource} from './engine.mjs';
 
-export const RULES='wheel-2';
+export const RULES='wheel-3';
 export const HZ=120, MAX_TICKS=7200, MAX_INPUTS=600;
+// Solid obstacles live in wheel space: angle around the rim x height above the rim.
+// The hamster stands at angle 0 (6 o'clock); its feet are at run.height, its body is BODY_H tall.
+const RADIUS=228, HAMSTER_HALF=17/RADIUS, BODY_H=26, STEP=6, EPS=1e-6;
+function solidsAtHamster(run){
+  const solids=[];
+  for(const group of run.groups){
+    const relative=group.offset+run.angle;if(relative>1.4||relative< -1.4)continue;
+    for(const part of group.parts){
+      const at=relative+part.delta,half=part.width/(2*(RADIUS-part.lift));
+      if(at-half<HAMSTER_HALF&&at+half>-HAMSTER_HALF)solids.push({bottom:part.lift,top:part.lift+part.height});
+    }
+  }
+  return solids;
+}
 export function createRun(challenge){
   if(challenge.rules!==RULES)throw Error('Unsupported rules');
   const random=randomSource(BigInt(challenge.seed));
@@ -21,15 +35,22 @@ export function stepRun(run,challenge,press=false){
   const target=targetSpeed(challenge,run.tick);
   if(run.tick===0)run.speed=target;
   run.speed+=(target-run.speed)*2/HZ;
+  const previous=run.height;
   run.angle+=run.speed/HZ;run.velocity-=1280/HZ;run.height+=run.velocity/HZ;
-  if(run.height<=0){run.height=0;run.velocity=0;run.jumps=0;}
-  const box={x:461,y:310-run.height-29,w:34,h:26};
-  for(const group of run.groups){
-    const relative=group.offset+run.angle;
-    if(relative>1.4||relative< -1.4)continue;
-    if(groupPolygons(group,run.angle,228,480,82).some(({poly})=>intersectsPolygonBox(poly,box)))run.dead=true;
-    if(relative>.7&&!group.passed){group.passed=true;run.passed++;}
+  const solids=solidsAtHamster(run);
+  // Land on top: falling onto (or within a small step of) the top face of a block stands on it.
+  let support=0;
+  if(run.velocity<=0)for(const b of solids)if(previous>=b.top-STEP&&run.height<=b.top+EPS&&b.top>support)support=b.top;
+  if(support>0){run.height=support;run.velocity=0;run.jumps=0;}
+  else if(run.height<=0){run.height=0;run.velocity=0;run.jumps=0;}
+  // Anything still overlapping: bump the head under a floating bar, otherwise the block's side ends the run.
+  for(const b of solids){
+    if(run.height<b.top-EPS&&run.height+BODY_H>b.bottom+EPS){
+      if(run.velocity>0&&previous+BODY_H<=b.bottom+EPS){run.height=b.bottom-BODY_H;run.velocity=0;}
+      else run.dead=true;
+    }
   }
+  for(const group of run.groups)if(group.offset+run.angle>.7&&!group.passed){group.passed=true;run.passed++;}
   run.tick++;
   run.score=Math.floor(run.angle*100)+run.passed*25;
   if(run.tick>=challenge.durationTicks)run.complete=true;

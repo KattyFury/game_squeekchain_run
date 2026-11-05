@@ -1,8 +1,16 @@
-import test from 'node:test';import assert from 'node:assert/strict';import {PATTERNS,groupPolygons,intersectsPolygonBox} from '../engine.mjs';
-function solve(parts,speed){const dt=1/120,center=1.4/speed,frames=[];for(let t=0;t<center+1.5;t+=dt)frames.push(groupPolygons({offset:-1.4,parts},speed*t,228,480,82).map(x=>x.poly));
- function safe(jumps){let h=0,v=0,used=0,index=0;for(let i=0;i<frames.length;i++){const time=i*dt;if(index<jumps.length&&time>=jumps[index]){if(used>=2)return false;v=455;used++;index++}v-=1280*dt;h+=v*dt;if(h<=0){h=0;v=0;used=0}const box={x:461,y:310-h-29,w:34,h:26};if(frames[i].some(p=>intersectsPolygonBox(p,box)))return false}return true}
- if(safe([]))return [];
- for(let a=Math.max(0,center-1.1);a<center+.1;a+=.05){if(safe([a]))return [a];for(let gap=.1;gap<=.65;gap+=.05)if(safe([a,a+gap]))return [a,a+gap]}
- return null;
+import test from 'node:test';import assert from 'node:assert/strict';import {PATTERNS} from '../engine.mjs';import {RULES,HZ,createRun,stepRun} from '../simulation.mjs';
+// Every authored pattern must be passable with Space alone at every supported speed, using the shared rules.
+function survives(parts,speed,inputs){
+  const challenge={rules:RULES,kind:'recorded',seed:'1',durationTicks:7200,speeds:[{tick:0,speed:Math.round(speed*1e6)}]};
+  const run=createRun(challenge);run.groups=[{offset:-1.4,parts:parts.map(p=>({...p})),passed:false}];
+  const end=Math.ceil((1.4+1.6)/speed*HZ);let index=0;
+  while(run.tick<end&&!run.dead){const press=inputs[index]===run.tick;if(press)index++;stepRun(run,challenge,press);}
+  return !run.dead&&run.passed===1;
+}
+function solve(parts,speed){
+  const center=Math.round(1.4/speed*HZ);
+  if(survives(parts,speed,[]))return [];
+  for(let a=Math.max(0,center-130);a<center+12;a+=3){if(survives(parts,speed,[a]))return [a];for(let gap=12;gap<=78;gap+=4)if(survives(parts,speed,[a,a+gap]))return [a,a+gap];}
+  return null;
 }
 for(let i=0;i<PATTERNS.length;i++)test('pattern '+i+' has a Space-only route at all supported speeds',()=>{for(const speed of [.55,.8,1.1,1.4])assert.notEqual(solve(PATTERNS[i],speed),null,'no path at speed '+speed)});

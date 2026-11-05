@@ -48,6 +48,7 @@
   <p id="onchain-progress">Onchain results appear here after saving.</p>
   <p><span id="chain-state">Checking Sepolia contracts…</span> <a id="chain-explorer" hidden target="_blank" rel="noreferrer">SqueekCore ↗</a> <a id="score-contract" target="_blank" rel="noreferrer" hidden>Score contract ↗</a></p>
   <p id="chain-detail"></p>
+  <p>Obstacles are solid. Land on top of one to stand on it and ride it until it rolls past; running into its side ends the run; bumping your head under a floating bar only stops your jump. You get two jumps per landing.</p>
   <p>Shared challenges use an immutable snapshot of recorded hardware passages from the Squeekchain API: everyone gets the same seed, obstacles and speed timeline. Each passage interval maps to <code>1.1 / interval seconds</code> rad/s, clamped to 0.55–1.4 and smoothed at 120 Hz. This is a game rule, not a physical simulation. Live mode freezes on idle, errors, stale data or an epoch change.</p>
   <p>The server recomputes shared scores from your inputs. Replay checking limits score tampering; it does not prevent bots or prove who played. Saving onchain writes a server-attested game score to the Squeek Run score contract on Sepolia (test ETH for gas). It is not SqueekCore-certified physical work. Wallet support: regular EOA wallets only.</p>
   <p id="telemetry">SQUEEKCHAIN / CHECKING</p><p>RULES wheel-2 · 120 Hz · <a href="https://docs.squeekchain.com/developers/api/" target="_blank" rel="noreferrer">Squeekchain API ↗</a></p>

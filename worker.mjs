@@ -1,4 +1,4 @@
-import {onchainConfig,activateContract,attestRun,onchainProgress} from './onchain.mjs';
+import {onchainConfig,attestRun,onchainProgress} from './onchain.mjs';
 import {walletSession,walletNonce,walletVerify,walletLogout} from './wallet-auth.mjs';
 import {readSepoliaSnapshot} from './sepolia.mjs';
 import {challengeFromRuns,digest} from './challenge.mjs';
@@ -36,7 +36,6 @@ export async function api(request,env){
   const url=new URL(request.url),db=env.DB;if(!db)return json({error:'Leaderboard is not configured'},503);
   if(request.method==='GET'&&url.pathname==='/api/onchain/progress')return json(await onchainProgress(request,env));
   if(request.method==='GET'&&url.pathname==='/api/onchain/config')return json(await onchainConfig(env));
-  if(request.method==='POST'&&url.pathname==='/api/onchain/activate'){await limit(request,db,'activate',4);return json(await activateContract(request,env,await readBody(request,1024)));}
   if(request.method==='POST'&&url.pathname==='/api/onchain/attest'){await limit(request,db,'attest',10);return json(await attestRun(request,env,await readBody(request,1024)));}
   if(request.method==='GET'&&url.pathname==='/api/chain'){
     const cache=globalThis.caches?.default,cacheKey=new Request(url.origin+'/api/chain');const hit=cache?await cache.match(cacheKey):null;if(hit)return hit;

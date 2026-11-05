@@ -1,5 +1,19 @@
 # Squeek Run — handoff cho Claude Code
 
+## 0. Cập nhật 2026-11-05 (Claude Code) — đọc cái này trước
+
+Đã làm xong, đã deploy Cloudflare và push GitHub:
+
+- **Host deploy contract, người chơi không deploy.** Đã bỏ nút deploy khỏi trang, đã **xóa endpoint `POST /api/onchain/activate`** (live trả 404) và `deploymentData` khỏi config. Deploy chạy bằng `scripts/deploy-score-contract.mjs <keys.env>` (cần `SQUEEK_RUN_DEPLOYER_KEY` trong keys file hoặc `DEPLOYER_PRIVATE_KEY`): deploy, xác minh runtime code + attestor, ghi D1, ghi `evidence/score-contract-deployment.json`. Key deployer chỉ trả gas, không có quyền gì trong contract.
+- **Canonical contract đã live trên Sepolia:** `0xa565c3c3dcd77fcec0eb08bf3799a98cf94d3bed` (deploy tx `0xfd69c1118037acfbe281355b90b701853bc9f829c4a20cd006aef32b26ffe241`). Config live trả đúng contract + attestor `0x37b6…22B5`.
+- **Đã chạy một vòng thật end-to-end trên live:** ví tạm → SIWE → replay witness được server kiểm (7409 điểm, hoàn thành) → attest → gửi `saveRun` → success, gasUsed ~364.6k → `/api/onchain/progress` đọc lại savedRuns=1. Tx: `0x9c5935d1b38e43c84184dd4ea81362fae60d75fa787f6c4152788042f2b1bdce`. Dòng QA đã xóa khỏi leaderboard; bản ghi onchain vẫn còn (không xóa được). **Vẫn chưa test bằng MetaMask thật trong trình duyệt.**
+- **Giao diện làm lại:** game ở đầu trang, một nút ví gọn, kết quả + Save onchain chỉ hiện sau lượt chơi, status/onchain/luật nằm trong mục thu gọn. Giữ nguyên các `id` DOM.
+- **Xử lý lỗi gas/lưu:** `onchain.js` giờ phân loại lỗi (từ chối ví, thiếu Sepolia ETH, nonce/pending, custom error của contract qua selector, mạng), estimate gas từ ví rồi +20%, và nếu tx lưu cũ bị revert thì xóa bản ghi pending để retry được. **Lỗi gas nguyên văn của user vẫn chưa nhận được**, nên chưa thể nói đó là nguyên nhân thật; gas thực tế mỗi lần lưu ~365k.
+- Sửa lỗi tham chiếu `saved` chưa khai báo trong `loadChallenge` (game.js).
+- Git root đã sạch và đồng bộ với GitHub (bản cũ nằm trong stash cục bộ, không cần). `npm ci` trên Windows cần `--force` vì `fsevents` (chỉ macOS) trong cây Ganache.
+
+Còn lại: test bằng ví trình duyệt thật + lấy lỗi gas của user; npm audit Ganache; IMD/Genesis (mục 11). Các mục 1, 6, 7 bên dưới là bản gốc trước handoff, phần đã làm được đánh dấu ở trên.
+
 Ngày: 2026-11-05, Asia/Bangkok. Đây là trạng thái thực tế và yêu cầu tiếp tục, không phải tuyên bố sản phẩm đã hoàn thiện.
 
 ## 1. Việc cần sửa đầu tiên theo phản hồi cuối của Hiếu

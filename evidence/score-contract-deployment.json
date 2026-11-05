@@ -1,0 +1,9 @@
+{
+  "chainId": 11155111,
+  "contract": "0xa565c3c3dcd77fcec0eb08bf3799a98cf94d3bed",
+  "deploymentTx": "0xfd69c1118037acfbe281355b90b701853bc9f829c4a20cd006aef32b26ffe241",
+  "block": "12068808",
+  "attestor": "0x37b6E7582e84790c9F741A728443C66fB01122B5",
+  "runtimeHash": "0xc7fc4eb467d18cd2a70bf4bf9b591d54273e65dd34fe346a8a7cc38edeaa6c43",
+  "deployedAt": "2026-11-05T10:13:19.818Z"
+}

@@ -1,4 +1,4 @@
-import {createPublicClient,http,keccak256,toHex,isAddress,encodeDeployData,encodeFunctionData} from 'viem';
+import {createPublicClient,http,keccak256,toHex,encodeFunctionData} from 'viem';
 import {sepolia} from 'viem/chains';import {privateKeyToAccount} from 'viem/accounts';
 import artifact from './contracts/artifacts/SqueekRunScores.json' with {type:'json'};
 import {walletSession} from './wallet-auth.mjs';import {validateReplay,RULES} from './simulation.mjs';
@@ -6,24 +6,14 @@ export const resultTypes={RunResult:[{name:'player',type:'address'},{name:'chall
 const fail=(message,status=400)=>Object.assign(Error(message),{status});
 const client=env=>createPublicClient({chain:sepolia,transport:http(env.SEPOLIA_RPC_URL||'https://ethereum-sepolia-rpc.publicnode.com',{retryCount:0,timeout:12000})});
 const signer=env=>{if(!env.SQUEEK_RUN_ATTESTATION_KEY)throw fail('Onchain attestor is not configured',503);return privateKeyToAccount(env.SQUEEK_RUN_ATTESTATION_KEY);};
-export async function onchainConfig(env){const account=signer(env),row=await env.DB.prepare('SELECT * FROM onchain_config WHERE chain_id=11155111').first();return {chainId:11155111,attestor:account.address,contract:row?.contract_address||null,deploymentTx:row?.deployment_tx||null,abi:artifact.abi,...(!row?{deploymentData:encodeDeployData({abi:artifact.abi,bytecode:artifact.bytecode,args:[account.address]})}:{}),runtimeHash:keccak256(artifact.deployedBytecode)};}
-export async function activateContract(request,env,body){
-  const wallet=await walletSession(request,env.DB);if(!wallet)throw fail('Sign in with your wallet first',401);
-  if(!isAddress(body.address)||!/^0x[a-fA-F0-9]{64}$/.test(body.transactionHash||''))throw fail('Invalid deployment');
-  const rpc=client(env);if(await rpc.getChainId()!==11155111)throw fail('Wrong deployment network');
-  const receipt=await rpc.getTransactionReceipt({hash:body.transactionHash});
-  if(receipt.status!=='success'||receipt.from.toLowerCase()!==wallet||receipt.contractAddress?.toLowerCase()!==body.address.toLowerCase()||receipt.to!==null)throw fail('Deployment receipt does not match this wallet');
-  const [code,attestor]=await Promise.all([rpc.getCode({address:body.address}),rpc.readContract({address:body.address,abi:artifact.abi,functionName:'attestor'})]);
-  if(!code||keccak256(code)!==keccak256(artifact.deployedBytecode)||attestor.toLowerCase()!==signer(env).address.toLowerCase())throw fail('Contract code or attestor does not match Squeek Run');
-  await env.DB.prepare('INSERT OR IGNORE INTO onchain_config VALUES (11155111,?,?,?)').bind(body.address.toLowerCase(),body.transactionHash,Date.now()).run();return onchainConfig(env);
-}
+export async function onchainConfig(env){const account=signer(env),row=await env.DB.prepare('SELECT * FROM onchain_config WHERE chain_id=11155111').first();return {chainId:11155111,attestor:account.address,contract:row?.contract_address||null,deploymentTx:row?.deployment_tx||null,abi:artifact.abi,runtimeHash:keccak256(artifact.deployedBytecode)};}
 export async function attestRun(request,env,body){
   const wallet=await walletSession(request,env.DB);if(!wallet)throw fail('Sign in with the wallet that played this run',401);
   if(typeof body.attempt!=='string'||body.attempt.length!==36)throw fail('Invalid attempt');
   const row=await env.DB.prepare('SELECT * FROM entries WHERE attempt_id=?').bind(body.attempt).first();if(!row||row.wallet_address!==wallet)throw fail('No verified result for this wallet',403);
   const challenge=await env.DB.prepare('SELECT body FROM challenges WHERE id=?').bind(row.challenge_id).first();if(!challenge||row.rules!==RULES)throw fail('Unsupported challenge rules');
   const result=validateReplay(JSON.parse(challenge.body),JSON.parse(row.replay));if(result.score!==row.score||result.ticks!==row.ticks||Number(result.completed)!==row.completed)throw fail('Stored replay failed verification');
-  const config=await onchainConfig(env);if(!config.contract)throw fail('Deploy the Sepolia score contract first',409);
+  const config=await onchainConfig(env);if(!config.contract)throw fail('Onchain saving is not open yet',409);
   const message={player:wallet,challengeId:'0x'+row.challenge_id,rulesHash:keccak256(toHex(row.rules)),replayHash:keccak256(toHex(row.replay)),runId:keccak256(toHex(row.attempt_id)),score:row.score,ticks:row.ticks,completed:!!row.completed,deadline:BigInt(Math.floor(Date.now()/1000)+3600)};
   const domain={name:'SqueekRunScores',version:'1',chainId:11155111,verifyingContract:config.contract};
   const signature=await signer(env).signTypedData({domain,types:resultTypes,primaryType:'RunResult',message});

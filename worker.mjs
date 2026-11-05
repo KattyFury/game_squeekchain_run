@@ -1,10 +1,8 @@
 import {onchainConfig,attestRun,onchainProgress,onchainLeaderboard,holderStatus} from './onchain.mjs';import {squeekCounts} from './holders.mjs';
 import {walletSession,walletNonce,walletVerify,walletLogout} from './wallet-auth.mjs';
 import {readSepoliaSnapshot} from './sepolia.mjs';
-import {challengeFromRuns,digest} from './challenge.mjs';
+import {digest} from './challenge.mjs';import {latestHardwareChallenge} from './hardware.mjs';
 import {RULES,validateReplay} from './simulation.mjs';
-import approved from './evidence/challenge.json' with {type:'json'};
-import witness from './evidence/route-witness.json' with {type:'json'};
 const SITE='https://squeek-run-test.plaidspice8.chatgpt.site';
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
 export async function readBody(request,max=16384){
@@ -20,20 +18,24 @@ async function limit(request,db,category,budget){
   if(row.count>budget)throw Object.assign(Error('Too many requests. Try again in a minute.'),{status:429});
 }
 async function latest(db){return db.prepare('SELECT body FROM challenges ORDER BY created_at DESC LIMIT 1').first();}
-export async function refreshChallenge(db){
-  let cursor=null,items=[],header;const seen=new Set();
-  for(let page=0;page<5;page++){
-    const u=new URL('https://api.squeekchain.com/v1/measurement/runs');u.searchParams.set('limit','100');if(cursor)u.searchParams.set('cursor',cursor);
-    const response=await fetch(u,{signal:AbortSignal.timeout(8000)});if(!response.ok)throw Error('Hardware history HTTP '+response.status);
-    const body=await response.json();if(body.schemaVersion!=='measurement-runs.v1')throw Error('Unsupported hardware history');
-    if(header&&body.installationId!==header.installationId)throw Error('Installation changed while paging');header=body;items.push(...body.items);
-    try{const challenge=await challengeFromRuns({...body,items});if(challenge.id!==approved.id||!validateReplay(challenge,witness).completed)throw Error('New source needs a full-route check before admission');await db.prepare('INSERT OR IGNORE INTO challenges(id,body,created_at) VALUES (?,?,?)').bind(challenge.id,JSON.stringify(challenge),Date.now()).run();return challenge;}catch(e){if(e.message!=='No continuous hardware window of at least 30 seconds')throw e;}
-    cursor=body.nextCursor;if(!cursor||seen.has(cursor)||!body.items.length)break;seen.add(cursor);
-    await new Promise(resolve=>setTimeout(resolve,550));
-  }throw Error('No usable hardware recording yet');
+// A challenge is published only if the Worker itself rebuilt it from the hardware history AND the supplied witness finishes it.
+export async function publishChallenge(db,witness,challenge){
+  if(!challenge)throw Object.assign(Error('No continuous hardware window available yet'),{status:409});
+  let proof;try{proof=validateReplay(challenge,witness);}catch{throw Object.assign(Error('Witness rejected'),{status:422});}
+  if(!proof.completed)throw Object.assign(Error('Challenge is not finishable'),{status:422});
+  const result=await db.prepare('INSERT OR IGNORE INTO challenges(id,body,created_at) VALUES (?,?,?)').bind(challenge.id,JSON.stringify(challenge),Date.now()).run();
+  return {id:challenge.id,published:result.meta.changes>0,score:proof.score,ticks:proof.ticks};
 }
 export async function api(request,env){
   const url=new URL(request.url),db=env.DB;if(!db)return json({error:'Leaderboard is not configured'},503);
+  if(request.method==='POST'&&url.pathname==='/api/admin/publish'){
+    if(!env.PUBLISH_TOKEN)return json({error:'Publishing is not configured'},503);
+    await limit(request,db,'publish',6);
+    const given=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
+    if(await digest(given)!==await digest(String(env.PUBLISH_TOKEN).trim()))return json({error:'Unauthorized'},401);
+    const body=await readBody(request,16384);
+    return json(await publishChallenge(db,body.witness,await latestHardwareChallenge()));
+  }
   if(request.method==='GET'&&url.pathname==='/api/onchain/progress')return json(await onchainProgress(request,env));
   if(request.method==='GET'&&url.pathname==='/api/holder')return json(await holderStatus(request,env));
   if(request.method==='GET'&&url.pathname==='/api/onchain/leaderboard'){
